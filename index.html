@@ -10,29 +10,43 @@
         .tab-active { background-color: #4f46e5; color: white; shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4); }
         @keyframes bounce-subtle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         .random-winner { border: 3px solid #4f46e5 !important; animation: bounce-subtle 0.5s ease-in-out 3; background-color: #f5f3ff !important; }
+        /* Smooth scroll pour le retour en haut */
+        html { scroll-behavior: smooth; }
     </style>
 </head>
 <body class="bg-slate-50 p-4 max-w-md mx-auto pb-20">
 
-    <header class="text-center py-6 flex justify-between items-center">
-        <h1 class="text-3xl font-extrabold text-indigo-600 tracking-tight">🍴 MyRestos</h1>
-        <!-- Bouton DÉ : Bascule en mode recherche et lance le sort -->
-        <button onclick="pickRandom()" class="bg-amber-400 hover:bg-amber-500 text-white p-3 rounded-2xl shadow-lg transition active:scale-95" title="Lancer le destin">
-            <span class="text-2xl">🎲</span>
-        </button>
+    <!-- HEADER STICKY : Titre + Actions (Dé et Ajout) -->
+    <header class="sticky top-0 z-40 bg-slate-50/90 backdrop-blur-md pt-4 pb-2 mb-2">
+        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
+            <h1 class="text-xl font-black text-indigo-600 tracking-tight pl-1">🍴 MyRestos</h1>
+            
+            <div class="flex gap-2">
+                <!-- Nouveau Bouton + -->
+                <button onclick="scrollToAdd()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-md transition active:scale-90" title="Ajouter un resto">
+                    <span class="text-xl font-bold">+</span>
+                </button>
+                <!-- Bouton Dé -->
+                <button onclick="pickRandom()" class="bg-amber-400 hover:bg-amber-500 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-md transition active:scale-90" title="Lancer le destin">
+                    <span class="text-xl">🎲</span>
+                </button>
+            </div>
+        </div>
     </header>
 
-    <!-- Navigation -->
-    <div class="flex bg-white rounded-2xl p-1 mb-6 shadow-sm border border-gray-100 font-bold text-[10px] sm:text-xs">
-        <button id="btnTabFait" onclick="setViewState('Fait')" class="flex-1 py-3 rounded-xl transition tab-active">J'ai testé</button>
-        <button id="btnTabAFaire" onclick="setViewState('À faire')" class="flex-1 py-3 rounded-xl transition text-gray-400">À découvrir</button>
-        <button id="btnTabSearch" onclick="setViewState('Recherche')" class="flex-1 py-3 rounded-xl transition text-gray-400">🔍 Chercher</button>
-    </div>
+    <!-- NAVIGATION STICKY (Juste en dessous du titre) -->
+    <nav class="sticky top-[80px] z-30 mb-6 pt-1">
+        <div class="flex bg-white/80 backdrop-blur-md rounded-2xl p-1 shadow-sm border border-gray-100 font-bold text-[10px]">
+            <button id="btnTabFait" onclick="setViewState('Fait')" class="flex-1 py-3 rounded-xl transition tab-active">J'ai testé</button>
+            <button id="btnTabAFaire" onclick="setViewState('À faire')" class="flex-1 py-3 rounded-xl transition text-gray-400">À découvrir</button>
+            <button id="btnTabSearch" onclick="setViewState('Recherche')" class="flex-1 py-3 rounded-xl transition text-gray-400">🔍 Chercher</button>
+        </div>
+    </nav>
 
-    <!-- Section Recherche -->
+    <!-- Section Recherche (Masquée par défaut) -->
     <div id="searchSection" class="hidden mb-8 space-y-3">
         <div class="bg-white p-4 rounded-3xl shadow-xl border border-indigo-100">
-            <input type="text" id="searchQuery" oninput="render()" placeholder="Nom ou ville..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none mb-3 border border-transparent focus:border-indigo-200 transition text-sm">
+            <input type="text" id="searchQuery" oninput="render()" placeholder="Nom ou ville..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none mb-3 text-sm">
             <select id="searchBudget" onchange="render()" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-gray-600 font-bold text-sm">
                 <option value="">Tous les budgets</option>
                 <option value="€">€ (Éco)</option><option value="€€">€€ (Moyen)</option><option value="€€€">€€€ (Chic)</option><option value="€€€€">€€€€ (Luxe)</option>
@@ -40,31 +54,27 @@
         </div>
     </div>
 
-    <!-- Formulaire d'ajout (URL supprimée) -->
+    <!-- Formulaire d'ajout (avec ID pour le scroll) -->
     <details id="addSection" class="mb-8 group">
-        <summary class="list-none bg-indigo-50 text-indigo-700 p-4 rounded-2xl font-bold text-center cursor-pointer group-open:mb-4">
+        <summary id="addSummary" class="list-none bg-indigo-50 text-indigo-700 p-4 rounded-2xl font-bold text-center cursor-pointer group-open:mb-4 transition-all">
             + Ajouter un nouveau restaurant
         </summary>
         <form id="restoForm" class="bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
             <div class="space-y-3">
-                <input type="text" id="name" placeholder="Nom du restaurant" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 ring-indigo-300 transition text-sm" required>
-                <input type="text" id="city" placeholder="Ville" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 ring-indigo-300 transition text-sm" required>
-                
+                <input type="text" id="name" placeholder="Nom du restaurant" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm" required>
+                <input type="text" id="city" placeholder="Ville" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm" required>
                 <div id="formFaitExtras" class="space-y-3">
                     <div class="flex gap-2">
-                        <select id="budget" class="flex-1 p-4 bg-slate-50 rounded-2xl outline-none text-gray-600 text-sm">
+                        <select id="budget" class="flex-1 p-4 bg-slate-50 rounded-2xl outline-none text-sm">
                             <option value="">Budget ?</option><option value="€">€</option><option value="€€">€€</option><option value="€€€">€€€</option><option value="€€€€">€€€€</option>
                         </select>
-                        <select id="moment" class="flex-1 p-4 bg-slate-50 rounded-2xl outline-none text-gray-600 text-sm">
+                        <select id="moment" class="flex-1 p-4 bg-slate-50 rounded-2xl outline-none text-sm">
                             <option value="Midi">☀️ Midi</option><option value="Soir">🌙 Soir</option><option value="Midi et Soir">🌗 Les deux</option>
                         </select>
                     </div>
-                    <div class="flex justify-between items-center p-2">
-                        <label class="text-gray-500 text-xs font-black uppercase">Note</label>
-                        <select id="rating" class="bg-transparent text-orange-500 font-bold text-xl outline-none">
-                            <option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option>
-                        </select>
-                    </div>
+                    <select id="rating" class="w-full p-4 bg-slate-50 rounded-2xl text-orange-500 font-bold text-xl outline-none">
+                        <option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option>
+                    </select>
                 </div>
                 <input type="text" id="comment" placeholder="Commentaire..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm">
                 <input type="text" id="user" placeholder="Ton nom" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-indigo-600 text-sm" required>
@@ -75,7 +85,7 @@
 
     <div id="listContainer" class="space-y-4"></div>
 
-    <!-- Modal Mise à jour -->
+    <!-- Modal Mise à jour (inchangé) -->
     <div id="updateModal" class="modal items-center justify-center p-6">
         <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl">
             <h2 class="text-2xl font-black text-gray-800 mb-1">C'était comment ?</h2>
@@ -108,12 +118,27 @@
         let viewState = "Fait"; 
         let currentUpdateName = "";
 
+        // --- NOUVELLE FONCTION : AJOUT RAPIDE ---
+        function scrollToAdd() {
+            // 1. Si on est en mode recherche, on repasse sur un mode d'ajout
+            if (viewState === 'Recherche') setViewState('À faire');
+            
+            // 2. On ouvre le formulaire <details>
+            const details = document.getElementById('addSection');
+            details.open = true;
+            
+            // 3. On scrolle vers le formulaire
+            details.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // 4. Petit focus sur le nom pour gagner du temps
+            document.getElementById('name').focus();
+        }
+
         function setViewState(state) {
             viewState = state;
             document.getElementById('btnTabFait').className = `flex-1 py-3 rounded-xl transition ${state === 'Fait' ? 'tab-active' : 'text-gray-400'}`;
             document.getElementById('btnTabAFaire').className = `flex-1 py-3 rounded-xl transition ${state === 'À faire' ? 'tab-active' : 'text-gray-400'}`;
             document.getElementById('btnTabSearch').className = `flex-1 py-3 rounded-xl transition ${state === 'Recherche' ? 'tab-active' : 'text-gray-400'}`;
-            
             document.getElementById('addSection').style.display = state === 'Recherche' ? 'none' : 'block';
             document.getElementById('searchSection').style.display = state === 'Recherche' ? 'block' : 'none';
             document.getElementById('formFaitExtras').style.display = state === 'Fait' ? 'block' : 'none';
@@ -128,63 +153,18 @@
             } catch (e) { console.error(e); }
         }
 
-        function pickRandom() {
-            // 1. On bascule obligatoirement sur l'onglet Recherche
-            setViewState('Recherche');
-
-            const query = document.getElementById('searchQuery').value.toLowerCase();
-            const budgetFilter = document.getElementById('searchBudget').value;
-            
-            // 2. On filtre la liste (tous les À faire + les Fait qui matchent le budget actuel)
-            const pool = allData.filter(r => {
-                const matchText = r.nom.toLowerCase().includes(query) || r.ville.toLowerCase().includes(query);
-                const isAFaire = r.statut === "À faire";
-                const isFaitMatchBudget = r.statut === "Fait" && (!budgetFilter || r.budget === budgetFilter);
-                return matchText && (isAFaire || isFaitMatchBudget);
+        async function vote(nom, type) {
+            const resto = allData.find(r => r.nom === nom);
+            const currentVotes = parseInt(resto[type] || 0);
+            const newData = {}; newData[type] = currentVotes + 1;
+            resto[type] = currentVotes + 1;
+            render();
+            await fetch(`${API_URL}/nom/${encodeURIComponent(nom)}`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: newData })
             });
-
-            if (pool.length === 0) return alert("Aucun resto ne correspond à tes filtres !");
-            
-            const winner = pool[Math.floor(Math.random() * pool.length)];
-            
-            // 3. Rendu avec mise en avant du gagnant
-            render(winner.nom); 
-            
-            // 4. Scroll vers le gagnant et confirmation
-            setTimeout(() => {
-                const winnerEl = document.getElementById(`resto-${winner.nom.replace(/\s+/g, '')}`);
-                if (winnerEl) winnerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                
-                if(confirm(`🎲 Le destin a choisi : ${winner.nom} ! On y va ?`)) {
-                    window.open(`https://www.google.com/maps/search/${encodeURIComponent(winner.nom + ' ' + winner.ville)}`, '_blank');
-                }
-            }, 800);
         }
-// --- FONCTION DE VOTE ---
-// Elle met à jour l'affichage immédiatement (Optimistic UI) 
-// puis envoie la donnée à SheetDB
-async function vote(nom, type) {
-    const resto = allData.find(r => r.nom === nom);
-    
-    // On initialise à 0 si la cellule est vide dans le Sheet
-    const currentVotes = parseInt(resto[type] || 0);
-    const newData = {};
-    newData[type] = currentVotes + 1;
 
-    // Mise à jour visuelle instantanée pour la réactivité
-    resto[type] = currentVotes + 1;
-    render();
-
-    try {
-        await fetch(`${API_URL}/nom/${encodeURIComponent(nom)}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: newData })
-        });
-    } catch (e) {
-        console.error("Erreur lors du vote:", e);
-    }
-}
         function render(highlightName = null) {
             const container = document.getElementById('listContainer');
             let filtered = [];
@@ -208,111 +188,74 @@ async function vote(nom, type) {
             container.innerHTML = filtered.map(r => {
                 const isWinner = highlightName === r.nom;
                 const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(r.nom + ' ' + r.ville)}`;
-                // On prépare le texte du bas : Commentaire + Auteur
-            const commentText = r.commentaire ? `"${r.commentaire}"` : "";
-            const authorText = r.evaluateur ? ` — Ajouté par ${r.evaluateur}` : "";
+                const commentText = r.commentaire ? `"${r.commentaire}"` : "";
+                const authorText = r.evaluateur ? ` — Ajouté par ${r.evaluateur}` : "";
 
-            return `
-           return `
-<div id="resto-${r.nom.replace(/\s+/g, '')}" class="bg-white p-5 rounded-[1.5rem] border ${isWinner ? 'random-winner' : 'border-gray-100'} shadow-sm transition-all flex flex-col gap-3">
-    
-    <!-- LIGNE 1 : NOM & INFOS (STARS/BUDGET) -->
-    <div class="flex justify-between items-start">
-        <div class="flex-1">
-            <a href="${mapsUrl}" target="_blank" class="flex items-center gap-2 group">
-                <h3 class="font-black text-slate-800 text-lg leading-tight group-hover:text-indigo-600 transition underline decoration-indigo-100 underline-offset-4">${r.nom}</h3>
-                <span class="text-indigo-400 text-xs">↗️</span>
-            </a>
-            <p class="text-[10px] text-indigo-400 font-bold uppercase mt-1 tracking-widest">📍 ${r.ville} ${r.moment ? '• '+r.moment : ''}</p>
-        </div>
-        
-        ${r.statut === 'Fait' 
-            ? `<div class="text-right">
-                <div class="text-orange-400 font-bold text-sm leading-none">${"★".repeat(r.note)}</div>
-                <div class="text-[10px] font-black text-green-600 mt-1">${r.budget || ''}</div>
-               </div>`
-            : `<button onclick="openUpdateModal('${r.nom.replace(/'/g, "\\'")}')" class="bg-green-500 text-white px-4 py-2 rounded-xl text-[10px] font-black shadow-md">J'Y SUIS !</button>`
-        }
-    </div>
-
-    <!-- LIGNE 2 : COMMENTAIRE (SI EXISTANT) -->
-    ${(commentText || authorText) ? `
-        <p class="text-slate-400 text-xs border-l-2 border-indigo-50 pl-3 italic">
-            ${commentText}${authorText}
-        </p>
-    ` : ''}
-
-    <!-- LIGNE 3 : VOTES (UNIQUEMENT SI FAIT) -->
-    ${r.statut === 'Fait' ? `
-        <div class="flex justify-end gap-2 mt-1">
-            <button onclick="vote('${r.nom.replace(/'/g, "\\'")}', 'likes')" class="flex items-center gap-1.5 text-[11px] font-bold bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg active:scale-90 transition">
-                👍 ${r.likes || 0}
-            </button>
-            <button onclick="vote('${r.nom.replace(/'/g, "\\'")}', 'dislikes')" class="flex items-center gap-1.5 text-[11px] font-bold bg-red-50 text-red-600 px-3 py-1.5 rounded-lg active:scale-90 transition">
-                👎 ${r.dislikes || 0}
-            </button>
-        </div>
-    ` : ''}
-</div>
-`
-            `}).join('');
+                return `
+                <div id="resto-${r.nom.replace(/\s+/g, '')}" class="bg-white p-5 rounded-[1.5rem] border ${isWinner ? 'random-winner' : 'border-gray-100'} shadow-sm transition-all flex flex-col gap-3">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <a href="${mapsUrl}" target="_blank" class="flex items-center gap-2 group">
+                                <h3 class="font-black text-slate-800 text-lg leading-tight underline decoration-indigo-100 underline-offset-4">${r.nom}</h3>
+                                <span class="text-indigo-400 text-xs">↗️</span>
+                            </a>
+                            <p class="text-[10px] text-indigo-400 font-bold uppercase mt-1 tracking-widest">📍 ${r.ville} ${r.moment ? '• '+r.moment : ''}</p>
+                        </div>
+                        <div class="text-right">
+                            ${r.statut === 'Fait' 
+                                ? `<div class="text-orange-400 font-bold text-sm">${"★".repeat(r.note)}</div><div class="text-[10px] font-black text-green-600 mt-1">${r.budget || ''}</div>`
+                                : `<button onclick="openUpdateModal('${r.nom.replace(/'/g, "\\'")}')" class="bg-green-500 text-white px-4 py-2 rounded-xl text-[10px] font-black shadow-md">J'Y SUIS !</button>`
+                            }
+                        </div>
+                    </div>
+                    ${(commentText || authorText) ? `<p class="text-slate-400 text-xs border-l-2 border-indigo-50 pl-3 italic">${commentText}${authorText}</p>` : ''}
+                    ${r.statut === 'Fait' ? `
+                        <div class="flex justify-end gap-2">
+                            <button onclick="vote('${r.nom.replace(/'/g, "\\'")}', 'likes')" class="flex items-center gap-1.5 text-[11px] font-bold bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg active:scale-90 transition">👍 ${r.likes || 0}</button>
+                            <button onclick="vote('${r.nom.replace(/'/g, "\\'")}', 'dislikes')" class="flex items-center gap-1.5 text-[11px] font-bold bg-red-50 text-red-600 px-3 py-1.5 rounded-lg active:scale-90 transition">👎 ${r.dislikes || 0}</button>
+                        </div>
+                    ` : ''}
+                </div>
+                `;
+            }).join('');
         }
 
-        function openUpdateModal(name) {
-            currentUpdateName = name;
-            document.getElementById('modalRestoName').innerText = name;
-            document.getElementById('updateModal').style.display = 'flex';
-        }
+        function openUpdateModal(name) { currentUpdateName = name; document.getElementById('modalRestoName').innerText = name; document.getElementById('updateModal').style.display = 'flex'; }
         function closeModal() { document.getElementById('updateModal').style.display = 'none'; }
 
         document.getElementById('restoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('btnSubmit');
-            btn.disabled = true;
-
-            const name = document.getElementById('name').value.trim();
-            const pendingResto = allData.find(r => r.nom.toLowerCase() === name.toLowerCase() && r.statut === "À faire");
-
+            const btn = document.getElementById('btnSubmit'); btn.disabled = true;
             const payload = {
-                nom: name,
-                ville: document.getElementById('city').value,
-                statut: viewState,
-                note: viewState === "Fait" ? document.getElementById('rating').value : "",
+                nom: document.getElementById('name').value, ville: document.getElementById('city').value,
+                statut: viewState, note: viewState === "Fait" ? document.getElementById('rating').value : "",
                 budget: viewState === "Fait" ? document.getElementById('budget').value : "",
                 moment: viewState === "Fait" ? document.getElementById('moment').value : "",
-                commentaire: document.getElementById('comment').value,
-                evaluateur: document.getElementById('user').value
+                commentaire: document.getElementById('comment').value, evaluateur: document.getElementById('user').value
             };
-
-            const method = (pendingResto && viewState === "Fait") ? 'PATCH' : 'POST';
-            await fetch(method === 'PATCH' ? `${API_URL}/nom/${encodeURIComponent(pendingResto.nom)}` : API_URL, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: method === 'PATCH' ? payload : [payload] })
-            });
-
-            document.getElementById('restoForm').reset();
-            document.querySelector('details').open = false;
-            fetchRestos();
-            btn.disabled = false;
+            await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: [payload] }) });
+            document.getElementById('restoForm').reset(); document.querySelector('details').open = false; fetchRestos(); btn.disabled = false;
         });
 
         async function submitUpdate() {
             const updateData = {
-                statut: "Fait",
-                note: document.getElementById('updateRating').value,
-                budget: document.getElementById('updateBudget').value,
-                moment: document.getElementById('updateMoment').value,
-                commentaire: document.getElementById('updateComment').value,
-                evaluateur: document.getElementById('updateUser').value
+                statut: "Fait", note: document.getElementById('updateRating').value, budget: document.getElementById('updateBudget').value,
+                moment: document.getElementById('updateMoment').value, commentaire: document.getElementById('updateComment').value, evaluateur: document.getElementById('updateUser').value
             };
-            await fetch(`${API_URL}/nom/${encodeURIComponent(currentUpdateName)}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: updateData })
-            });
-            closeModal();
-            fetchRestos();
+            await fetch(`${API_URL}/nom/${encodeURIComponent(currentUpdateName)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: updateData }) });
+            closeModal(); fetchRestos();
+        }
+
+        function pickRandom() {
+            setViewState('Recherche');
+            const pool = allData.filter(r => r.statut === "À faire" || r.statut === "Fait");
+            if (pool.length === 0) return;
+            const winner = pool[Math.floor(Math.random() * pool.length)];
+            render(winner.nom);
+            setTimeout(() => { 
+                const el = document.getElementById(`resto-${winner.nom.replace(/\s+/g, '')}`);
+                if(el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 500);
         }
 
         fetchRestos();
