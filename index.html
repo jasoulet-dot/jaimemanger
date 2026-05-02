@@ -22,7 +22,7 @@
         <button id="btnTabAFaire" onclick="setViewState('À faire')" class="flex-1 py-3 rounded-xl transition text-gray-400">À découvrir</button>
     </div>
 
-    <!-- Formulaire d'ajout (Toujours visible ou repliable) -->
+    <!-- Formulaire d'ajout -->
     <details class="mb-8 group">
         <summary class="list-none bg-indigo-50 text-indigo-700 p-4 rounded-2xl font-bold text-center cursor-pointer group-open:mb-4">
             + Ajouter un nouveau restaurant
@@ -54,7 +54,7 @@
         <div class="text-center py-10 text-gray-400 italic">Chargement des pépites...</div>
     </div>
 
-    <!-- MODAL DE MISE À JOUR -->
+    <!-- MODAL DE MISE À JOUR (Pop-up) -->
     <div id="updateModal" class="modal items-center justify-center p-6">
         <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl">
             <h2 class="text-2xl font-black text-gray-800 mb-1">C'était comment ?</h2>
@@ -80,9 +80,11 @@
     </div>
 
     <script>
+        // --- CONFIGURATION ---
         const API_URL = "https://sheetdb.io/api/v1/lwe5ipx4o126r"; 
+        
         let allData = [];
-        let viewState = "Fait"; // État par défaut
+        let viewState = "Fait"; 
         let currentUpdateName = "";
 
         // Changer d'onglet
@@ -102,23 +104,60 @@
         }
         function closeModal() { document.getElementById('updateModal').style.display = 'none'; }
 
-        // Charger les données
+        // Charger les données depuis Google Sheets
         async function fetchRestos() {
             try {
                 const res = await fetch(API_URL);
                 allData = await res.json();
                 render();
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                console.error(e);
+                document.getElementById('listContainer').innerHTML = `<div class="text-center py-10 text-red-400">Erreur de connexion à la base de données.</div>`;
+            }
         }
 
-        // Ajouter un resto
+        // Gestion du formulaire avec vérification de doublons
         document.getElementById('restoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            const inputName = document.getElementById('name').value.trim();
             const btn = document.getElementById('btnSubmit');
+
+            // Recherche si le resto existe déjà
+            const existingResto = allData.find(r => r.nom.toLowerCase() === inputName.toLowerCase());
+
+            if (existingResto) {
+                if (existingResto.statut === "Fait") {
+                    alert(`⚠️ "${inputName}" est déjà dans tes restos faits !`);
+                    return;
+                }
+                if (existingResto.statut === "À faire" && viewState === "Fait") {
+                    const confirmMigrate = confirm(`"${inputName}" est déjà dans "À découvrir". On le bascule en "Fait" avec ta note ?`);
+                    if (confirmMigrate) {
+                        btn.disabled = true;
+                        btn.innerText = "MIGRATION...";
+                        await updateResto(existingResto.nom, {
+                            statut: "Fait",
+                            note: document.getElementById('rating').value,
+                            commentaire: document.getElementById('comment').value,
+                            evaluateur: document.getElementById('user').value
+                        });
+                        finishSubmit();
+                        return;
+                    } else { return; }
+                }
+                if (existingResto.statut === "À faire" && viewState === "À faire") {
+                    alert(`⚠️ "${inputName}" est déjà dans ta liste "À découvrir" !`);
+                    return;
+                }
+            }
+
+            // Nouvel ajout classique
             btn.disabled = true;
+            btn.innerText = "ENREGISTRER...";
 
             const payload = {
-                nom: document.getElementById('name').value,
+                nom: inputName,
                 ville: document.getElementById('city').value,
                 note: viewState === "Fait" ? document.getElementById('rating').value : "",
                 statut: viewState,
@@ -132,32 +171,39 @@
                 body: JSON.stringify({ data: [payload] })
             });
 
-            document.getElementById('restoForm').reset();
-            document.querySelector('details').open = false;
-            fetchRestos();
-            btn.disabled = false;
+            finishSubmit();
         });
 
-        // Passer de "À faire" à "Fait"
+        // Fonction pour mettre à jour une ligne (PATCH)
+        async function updateResto(name, data) {
+            await fetch(`${API_URL}/nom/${encodeURIComponent(name)}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: data })
+            });
+        }
+
+        // Action depuis la pop-up (Passer de À faire à Fait)
         async function submitUpdate() {
-            const updateData = {
+            await updateResto(currentUpdateName, {
                 statut: "Fait",
                 note: document.getElementById('updateRating').value,
                 commentaire: document.getElementById('updateComment').value,
                 evaluateur: document.getElementById('updateUser').value
-            };
-
-            await fetch(`${API_URL}/nom/${encodeURIComponent(currentUpdateName)}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: updateData })
             });
-
             closeModal();
             fetchRestos();
         }
 
-        // Affichage dynamique
+        function finishSubmit() {
+            document.getElementById('restoForm').reset();
+            document.querySelector('details').open = false;
+            fetchRestos();
+            document.getElementById('btnSubmit').disabled = false;
+            document.getElementById('btnSubmit').innerText = "ENREGISTRER";
+        }
+
+        // Affichage de la liste
         function render() {
             const container = document.getElementById('listContainer');
             const filtered = allData.filter(r => r.statut === viewState).reverse();
@@ -185,6 +231,7 @@
             `).join('');
         }
 
+        // Lancement au chargement
         fetchRestos();
     </script>
 </body>
