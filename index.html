@@ -3,39 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Napster Resto</title>
+    <title>MyRestos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); }
-        .tab-active { background-color: #4f46e5; color: white; shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4); }
+        .tab-active { background-color: #4f46e5; color: white; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4); }
         @keyframes bounce-subtle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         .random-winner { border: 3px solid #4f46e5 !important; animation: bounce-subtle 0.5s ease-in-out 3; background-color: #f5f3ff !important; }
-        /* Smooth scroll pour le retour en haut */
         html { scroll-behavior: smooth; }
     </style>
 </head>
 <body class="bg-slate-50 p-4 max-w-md mx-auto pb-20">
 
-    <!-- HEADER STICKY : Titre + Actions (Dé et Ajout) -->
-    <header class="sticky top-0 z-40 bg-slate-50/90 backdrop-blur-md pt-4 pb-2 mb-2">
-        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
-            <h1 class="text-xl font-black text-indigo-600 tracking-tight pl-1">🍴 MyRestos</h1>
+    <!-- HEADER STICKY : Design conforme à l'image -->
+    <header class="sticky top-0 z-40 bg-slate-50/90 backdrop-blur-md pt-4 pb-2 mb-2 px-1">
+        <div class="flex justify-between items-center bg-white p-3 rounded-[1.8rem] border border-gray-100 shadow-sm">
+            <div class="flex items-center gap-2 pl-1">
+                <span class="text-2xl">🍴</span>
+                <h1 class="text-xl font-black text-indigo-600 tracking-tight">MyRestos</h1>
+            </div>
             
-            <div class="flex gap-2">
-                <!-- Nouveau Bouton + -->
-                <button onclick="scrollToAdd()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-md transition active:scale-90" title="Ajouter un resto">
-                    <span class="text-xl font-bold">+</span>
+            <div class="flex items-center gap-2">
+                <button onclick="scrollToAdd()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-md transition active:scale-90">
+                    <span class="text-2xl font-light">+</span>
                 </button>
-                <!-- Bouton Dé -->
-                <button onclick="pickRandom()" class="bg-amber-400 hover:bg-amber-500 text-white px-4 h-10 flex items-center gap-2 rounded-xl shadow-md transition active:scale-90" title="Lancer le destin">
-    <span class="text-xs font-black uppercase tracking-wider">SurpriZme</span>
-    <span class="text-xl">🎲</span>
-</button>
+
+                <button onclick="pickRandom()" class="bg-amber-400 hover:bg-amber-500 text-white px-4 h-10 flex items-center gap-2 rounded-xl shadow-md transition active:scale-90">
+                    <span class="text-[10px] font-black uppercase tracking-tighter">SURPRIZME</span>
+                    <span class="text-xl">🎲</span>
+                </button>
             </div>
         </div>
     </header>
 
-    <!-- NAVIGATION STICKY (Juste en dessous du titre) -->
+    <!-- NAVIGATION STICKY -->
     <nav class="sticky top-[80px] z-30 mb-6 pt-1">
         <div class="flex bg-white/80 backdrop-blur-md rounded-2xl p-1 shadow-sm border border-gray-100 font-bold text-[10px]">
             <button id="btnTabFait" onclick="setViewState('Fait')" class="flex-1 py-3 rounded-xl transition tab-active">J'ai testé</button>
@@ -44,7 +45,7 @@
         </div>
     </nav>
 
-    <!-- Section Recherche (Masquée par défaut) -->
+    <!-- RECHERCHE -->
     <div id="searchSection" class="hidden mb-8 space-y-3">
         <div class="bg-white p-4 rounded-3xl shadow-xl border border-indigo-100">
             <input type="text" id="searchQuery" oninput="render()" placeholder="Nom ou ville..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none mb-3 text-sm">
@@ -55,9 +56,9 @@
         </div>
     </div>
 
-    <!-- Formulaire d'ajout (avec ID pour le scroll) -->
+    <!-- FORMULAIRE -->
     <details id="addSection" class="mb-8 group">
-        <summary id="addSummary" class="list-none bg-indigo-50 text-indigo-700 p-4 rounded-2xl font-bold text-center cursor-pointer group-open:mb-4 transition-all">
+        <summary class="list-none bg-indigo-50 text-indigo-700 p-4 rounded-2xl font-bold text-center cursor-pointer group-open:mb-4 transition-all">
             + Ajouter un nouveau restaurant
         </summary>
         <form id="restoForm" class="bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
@@ -86,7 +87,6 @@
 
     <div id="listContainer" class="space-y-4"></div>
 
-    <!-- Modal Mise à jour (inchangé) -->
     <div id="updateModal" class="modal items-center justify-center p-6">
         <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl">
             <h2 class="text-2xl font-black text-gray-800 mb-1">C'était comment ?</h2>
@@ -119,21 +119,20 @@
         let viewState = "Fait"; 
         let currentUpdateName = "";
 
-        // --- NOUVELLE FONCTION : AJOUT RAPIDE ---
+        // Gestion du bouton Retour Mobile pour fermer le formulaire[cite: 2]
         function scrollToAdd() {
-            // 1. Si on est en mode recherche, on repasse sur un mode d'ajout
             if (viewState === 'Recherche') setViewState('À faire');
-            
-            // 2. On ouvre le formulaire <details>
             const details = document.getElementById('addSection');
             details.open = true;
-            
-            // 3. On scrolle vers le formulaire
-            details.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // 4. Petit focus sur le nom pour gagner du temps
+            history.pushState({ action: "close-form" }, ""); // Simule un état de page pour le bouton retour[cite: 2]
+            details.scrollIntoView({ behavior: 'smooth', block: 'start' });
             document.getElementById('name').focus();
         }
+
+        window.onpopstate = function() {
+            const details = document.getElementById('addSection');
+            if (details.open) details.open = false; // Ferme si l'utilisateur fait "Retour"[cite: 2]
+        };
 
         function setViewState(state) {
             viewState = state;
@@ -169,29 +168,21 @@
         function render(highlightName = null) {
             const container = document.getElementById('listContainer');
             let filtered = [];
-
             if (viewState === 'Recherche') {
                 const query = document.getElementById('searchQuery').value.toLowerCase();
                 const budgetFilter = document.getElementById('searchBudget').value;
                 filtered = allData.filter(r => {
                     const matchText = r.nom.toLowerCase().includes(query) || r.ville.toLowerCase().includes(query);
-                    const isAFaire = r.statut === "À faire";
-                    const isFaitMatchBudget = r.statut === "Fait" && (!budgetFilter || r.budget === budgetFilter);
-                    return matchText && (isAFaire || isFaitMatchBudget);
+                    return matchText && (!budgetFilter || r.budget === budgetFilter);
                 });
             } else {
                 filtered = allData.filter(r => r.statut === viewState);
             }
-
             filtered = filtered.reverse();
             if (filtered.length === 0) { container.innerHTML = `<p class="text-center py-10 text-gray-300 italic">Aucun résultat...</p>`; return; }
-
             container.innerHTML = filtered.map(r => {
                 const isWinner = highlightName === r.nom;
                 const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(r.nom + ' ' + r.ville)}`;
-                const commentText = r.commentaire ? `"${r.commentaire}"` : "";
-                const authorText = r.evaluateur ? ` — Ajouté par ${r.evaluateur}` : "";
-
                 return `
                 <div id="resto-${r.nom.replace(/\s+/g, '')}" class="bg-white p-5 rounded-[1.5rem] border ${isWinner ? 'random-winner' : 'border-gray-100'} shadow-sm transition-all flex flex-col gap-3">
                     <div class="flex justify-between items-start">
@@ -209,33 +200,39 @@
                             }
                         </div>
                     </div>
-                    ${(commentText || authorText) ? `<p class="text-slate-400 text-xs border-l-2 border-indigo-50 pl-3 italic">${commentText}${authorText}</p>` : ''}
+                    ${r.commentaire ? `<p class="text-slate-400 text-xs border-l-2 border-indigo-50 pl-3 italic">"${r.commentaire}"${r.evaluateur ? ' — ' + r.evaluateur : ''}</p>` : ''}
                     ${r.statut === 'Fait' ? `
                         <div class="flex justify-end gap-2">
                             <button onclick="vote('${r.nom.replace(/'/g, "\\'")}', 'likes')" class="flex items-center gap-1.5 text-[11px] font-bold bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg active:scale-90 transition">👍 ${r.likes || 0}</button>
                             <button onclick="vote('${r.nom.replace(/'/g, "\\'")}', 'dislikes')" class="flex items-center gap-1.5 text-[11px] font-bold bg-red-50 text-red-600 px-3 py-1.5 rounded-lg active:scale-90 transition">👎 ${r.dislikes || 0}</button>
                         </div>
                     ` : ''}
-                </div>
-                `;
+                </div>`;
             }).join('');
         }
 
         function openUpdateModal(name) { currentUpdateName = name; document.getElementById('modalRestoName').innerText = name; document.getElementById('updateModal').style.display = 'flex'; }
         function closeModal() { document.getElementById('updateModal').style.display = 'none'; }
 
+        // Correction Submit : Fermeture auto sans refresh[cite: 2]
         document.getElementById('restoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('btnSubmit'); btn.disabled = true;
+            const btn = document.getElementById('btnSubmit'); btn.disabled = true; btn.innerText = "ENVOI...";
             const payload = {
                 nom: document.getElementById('name').value, ville: document.getElementById('city').value,
                 statut: viewState, note: viewState === "Fait" ? document.getElementById('rating').value : "",
                 budget: viewState === "Fait" ? document.getElementById('budget').value : "",
                 moment: viewState === "Fait" ? document.getElementById('moment').value : "",
-                commentaire: document.getElementById('comment').value, evaluateur: document.getElementById('user').value
+                commentaire: document.getElementById('comment').value, evaluateur: document.getElementById('user').value,
+                likes: 0, dislikes: 0
             };
-            await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: [payload] }) });
-            document.getElementById('restoForm').reset(); document.querySelector('details').open = false; fetchRestos(); btn.disabled = false;
+            try {
+                await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: [payload] }) });
+                document.getElementById('restoForm').reset();
+                document.getElementById('addSection').open = false; // Ferme le formulaire[cite: 2]
+                if(window.history.state?.action === "close-form") history.back();
+                await fetchRestos();
+            } finally { btn.disabled = false; btn.innerText = "ENREGISTRER"; }
         });
 
         async function submitUpdate() {
@@ -258,7 +255,6 @@
                 if(el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 500);
         }
-
         fetchRestos();
     </script>
 </body>
