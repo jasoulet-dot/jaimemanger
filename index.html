@@ -184,24 +184,33 @@
             container.innerHTML = filtered.map(r => {
                 const isWinner = highlightName === r.nom;
                 const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(r.nom + ' ' + r.ville)}`;
-                
-                return `
-                <div id="resto-${r.nom.replace(/\s+/g, '')}" class="bg-white p-5 rounded-[1.5rem] border ${isWinner ? 'random-winner' : 'border-gray-100'} shadow-sm transition-all">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                            <a href="${mapsUrl}" target="_blank" class="flex items-center gap-2 group">
-                                <h3 class="font-black text-slate-800 text-lg leading-tight group-hover:text-indigo-600 transition underline decoration-indigo-100 underline-offset-4">${r.nom}</h3>
-                                <span class="text-indigo-400 text-xs">↗️</span>
-                            </a>
-                            <p class="text-[10px] text-indigo-400 font-bold uppercase mt-1 tracking-widest">📍 ${r.ville} ${r.moment ? '• '+r.moment : ''}</p>
-                        </div>
-                        ${r.statut === 'Fait' 
-                            ? `<div class="text-right"><div class="text-orange-400 font-bold text-sm">${"★".repeat(r.note)}</div><div class="text-[10px] font-black text-green-600">${r.budget || ''}</div></div>`
-                            : `<button onclick="openUpdateModal('${r.nom.replace(/'/g, "\\'")}')" class="bg-green-500 text-white px-4 py-2 rounded-xl text-[10px] font-black shadow-md">J'Y SUIS !</button>`
-                        }
+                // On prépare le texte du bas : Commentaire + Auteur
+            const commentText = r.commentaire ? `"${r.commentaire}"` : "";
+            const authorText = r.evaluateur ? ` — Ajouté par ${r.evaluateur}` : "";
+
+            return `
+            <div id="resto-${r.nom.replace(/\s+/g, '')}" class="bg-white p-5 rounded-[1.5rem] border ${isWinner ? 'random-winner' : 'border-gray-100'} shadow-sm transition-all">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <a href="${mapsUrl}" target="_blank" class="flex items-center gap-2 group">
+                            <h3 class="font-black text-slate-800 text-lg leading-tight group-hover:text-indigo-600 transition underline decoration-indigo-100 underline-offset-4">${r.nom}</h3>
+                            <span class="text-indigo-400 text-xs">↗️</span>
+                        </a>
+                        <p class="text-[10px] text-indigo-400 font-bold uppercase mt-1 tracking-widest">📍 ${r.ville} ${r.moment ? '• '+r.moment : ''}</p>
                     </div>
-                    ${r.commentaire ? `<p class="text-slate-400 text-xs mt-3 border-l-2 border-indigo-50 pl-3 italic">"${r.commentaire}"</p>` : ''}
+                    ${r.statut === 'Fait' 
+                        ? `<div class="text-right"><div class="text-orange-400 font-bold text-sm">${"★".repeat(r.note)}</div><div class="text-[10px] font-black text-green-600">${r.budget || ''}</div></div>`
+                        : `<button onclick="openUpdateModal('${r.nom.replace(/'/g, "\\'")}')" class="bg-green-500 text-white px-4 py-2 rounded-xl text-[10px] font-black shadow-md">J'Y SUIS !</button>`
+                    }
                 </div>
+                
+                <!-- Section Commentaire + Auteur en gris discret -->
+                ${(commentText || authorText) ? `
+                    <p class="text-slate-400 text-xs mt-3 border-l-2 border-indigo-50 pl-3 italic">
+                        ${commentText}${authorText}
+                    </p>
+                ` : ''}
+            </div>
             `}).join('');
         }
 
