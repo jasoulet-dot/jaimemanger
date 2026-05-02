@@ -16,13 +16,11 @@
         <h1 class="text-3xl font-extrabold text-indigo-600 tracking-tight">🍴 MyRestos</h1>
     </header>
 
-    <!-- Onglets principaux -->
     <div class="flex bg-white rounded-2xl p-1 mb-6 shadow-sm border border-gray-100 font-bold text-sm">
         <button id="btnTabFait" onclick="setViewState('Fait')" class="flex-1 py-3 rounded-xl transition tab-active">J'ai testé</button>
         <button id="btnTabAFaire" onclick="setViewState('À faire')" class="flex-1 py-3 rounded-xl transition text-gray-400">À découvrir</button>
     </div>
 
-    <!-- Formulaire d'ajout -->
     <details class="mb-8 group">
         <summary class="list-none bg-indigo-50 text-indigo-700 p-4 rounded-2xl font-bold text-center cursor-pointer group-open:mb-4">
             + Ajouter un nouveau restaurant
@@ -32,16 +30,33 @@
                 <input type="text" id="name" placeholder="Nom du restaurant" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 ring-indigo-300 transition" required>
                 <input type="text" id="city" placeholder="Ville" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 ring-indigo-300 transition" required>
                 
-                <div id="formRatingSection" class="flex justify-between items-center p-2">
-                    <label class="text-gray-500 text-xs font-black uppercase">Note</label>
-                    <select id="rating" class="bg-transparent text-orange-500 font-bold text-xl outline-none">
-                        <option value="5">⭐⭐⭐⭐⭐</option>
-                        <option value="4">⭐⭐⭐⭐</option>
-                        <option value="3">⭐⭐⭐</option>
-                        <option value="2">⭐⭐</option>
-                        <option value="1">⭐</option>
-                    </select>
+                <div id="formFaitExtras" class="space-y-3">
+                    <div class="flex gap-2">
+                        <select id="budget" class="flex-1 p-4 bg-slate-50 rounded-2xl outline-none text-gray-600">
+                            <option value="">Budget ?</option>
+                            <option value="€">€ (Éco)</option>
+                            <option value="€€">€€ (Moyen)</option>
+                            <option value="€€€">€€€ (Chic)</option>
+                            <option value="€€€€">€€€€ (Luxe)</option>
+                        </select>
+                        <select id="moment" class="flex-1 p-4 bg-slate-50 rounded-2xl outline-none text-gray-600">
+                            <option value="Midi">☀️ Midi</option>
+                            <option value="Soir">🌙 Soir</option>
+                            <option value="Midi et Soir">🌗 Midi & Soir</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-between items-center p-2">
+                        <label class="text-gray-500 text-xs font-black uppercase">Note</label>
+                        <select id="rating" class="bg-transparent text-orange-500 font-bold text-xl outline-none">
+                            <option value="5">⭐⭐⭐⭐⭐</option>
+                            <option value="4">⭐⭐⭐⭐</option>
+                            <option value="3">⭐⭐⭐</option>
+                            <option value="2">⭐⭐</option>
+                            <option value="1">⭐</option>
+                        </select>
+                    </div>
                 </div>
+
                 <input type="text" id="comment" placeholder="Commentaire..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
                 <input type="text" id="user" placeholder="Ton nom" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-indigo-600" required>
                 <button type="submit" id="btnSubmit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-100">ENREGISTRER</button>
@@ -49,54 +64,53 @@
         </form>
     </details>
 
-    <!-- Conteneur de liste unique -->
     <div id="listContainer" class="space-y-4">
-        <div class="text-center py-10 text-gray-400 italic">Chargement des pépites...</div>
+        <div class="text-center py-10 text-gray-400 italic">Chargement...</div>
     </div>
 
-    <!-- MODAL DE MISE À JOUR (Pop-up) -->
+    <!-- MODAL MISE À JOUR -->
     <div id="updateModal" class="modal items-center justify-center p-6">
         <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl">
             <h2 class="text-2xl font-black text-gray-800 mb-1">C'était comment ?</h2>
             <p id="modalRestoName" class="text-indigo-500 font-bold mb-6 italic"></p>
-            
             <div class="space-y-4">
-                <select id="updateRating" class="w-full p-4 bg-slate-50 rounded-2xl text-orange-500 font-bold text-lg outline-none">
-                    <option value="5">⭐⭐⭐⭐⭐</option>
-                    <option value="4">⭐⭐⭐⭐</option>
-                    <option value="3">⭐⭐⭐</option>
-                    <option value="2">⭐⭐</option>
-                    <option value="1">⭐</option>
+                <div class="flex gap-2">
+                    <select id="updateBudget" class="flex-1 p-4 bg-slate-50 rounded-2xl outline-none">
+                        <option value="€">€</option><option value="€€">€€</option><option value="€€€">€€€</option><option value="€€€€">€€€€</option>
+                    </select>
+                    <select id="updateMoment" class="flex-1 p-4 bg-slate-50 rounded-2xl outline-none">
+                        <option value="Midi">Midi</option>
+                        <option value="Soir">Soir</option>
+                        <option value="Midi et Soir">Midi & Soir</option>
+                    </select>
+                </div>
+                <select id="updateRating" class="w-full p-4 bg-slate-50 rounded-2xl text-orange-500 font-bold text-lg">
+                    <option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option>
                 </select>
-                <textarea id="updateComment" class="w-full p-4 bg-slate-50 rounded-2xl outline-none" rows="2" placeholder="Ton avis final..."></textarea>
+                <textarea id="updateComment" class="w-full p-4 bg-slate-50 rounded-2xl outline-none" rows="2" placeholder="Ton avis..."></textarea>
                 <input type="text" id="updateUser" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-indigo-600" placeholder="Ton nom">
-                
                 <div class="flex gap-4 pt-4">
                     <button onclick="closeModal()" class="flex-1 py-4 text-gray-400 font-bold">Annuler</button>
-                    <button onclick="submitUpdate()" class="flex-1 py-4 bg-green-500 text-white rounded-2xl font-bold shadow-lg shadow-green-100">VALIDER</button>
+                    <button onclick="submitUpdate()" class="flex-1 py-4 bg-green-500 text-white rounded-2xl font-bold">VALIDER</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
         const API_URL = "https://sheetdb.io/api/v1/lwe5ipx4o126r"; 
-        
         let allData = [];
         let viewState = "Fait"; 
         let currentUpdateName = "";
 
-        // Changer d'onglet
         function setViewState(state) {
             viewState = state;
             document.getElementById('btnTabFait').className = `flex-1 py-3 rounded-xl transition ${state === 'Fait' ? 'tab-active' : 'text-gray-400'}`;
             document.getElementById('btnTabAFaire').className = `flex-1 py-3 rounded-xl transition ${state === 'À faire' ? 'tab-active' : 'text-gray-400'}`;
-            document.getElementById('formRatingSection').style.display = state === 'Fait' ? 'flex' : 'none';
+            document.getElementById('formFaitExtras').style.display = state === 'Fait' ? 'block' : 'none';
             render();
         }
 
-        // Fonctions Modal
         function openUpdateModal(name) {
             currentUpdateName = name;
             document.getElementById('modalRestoName').innerText = name;
@@ -104,134 +118,100 @@
         }
         function closeModal() { document.getElementById('updateModal').style.display = 'none'; }
 
-        // Charger les données depuis Google Sheets
         async function fetchRestos() {
             try {
                 const res = await fetch(API_URL);
                 allData = await res.json();
                 render();
-            } catch (e) { 
-                console.error(e);
-                document.getElementById('listContainer').innerHTML = `<div class="text-center py-10 text-red-400">Erreur de connexion à la base de données.</div>`;
-            }
+            } catch (e) { console.error(e); }
         }
 
-        // Gestion du formulaire avec vérification de doublons
         document.getElementById('restoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const inputName = document.getElementById('name').value.trim();
+            const inputMoment = document.getElementById('moment').value;
             const btn = document.getElementById('btnSubmit');
 
-            // Recherche si le resto existe déjà
-            const existingResto = allData.find(r => r.nom.toLowerCase() === inputName.toLowerCase());
+            const duplicate = allData.find(r => 
+                r.nom.toLowerCase() === inputName.toLowerCase() && 
+                r.statut === "Fait" && 
+                r.moment === inputMoment
+            );
 
-            if (existingResto) {
-                if (existingResto.statut === "Fait") {
-                    alert(`⚠️ "${inputName}" est déjà dans tes restos faits !`);
-                    return;
-                }
-                if (existingResto.statut === "À faire" && viewState === "Fait") {
-                    const confirmMigrate = confirm(`"${inputName}" est déjà dans "À découvrir". On le bascule en "Fait" avec ta note ?`);
-                    if (confirmMigrate) {
-                        btn.disabled = true;
-                        btn.innerText = "MIGRATION...";
-                        await updateResto(existingResto.nom, {
-                            statut: "Fait",
-                            note: document.getElementById('rating').value,
-                            commentaire: document.getElementById('comment').value,
-                            evaluateur: document.getElementById('user').value
-                        });
-                        finishSubmit();
-                        return;
-                    } else { return; }
-                }
-                if (existingResto.statut === "À faire" && viewState === "À faire") {
-                    alert(`⚠️ "${inputName}" est déjà dans ta liste "À découvrir" !`);
-                    return;
-                }
+            if (duplicate && viewState === "Fait") {
+                alert(`⚠️ Déjà enregistré pour le créneau : ${inputMoment}`);
+                return;
             }
 
-            // Nouvel ajout classique
-            btn.disabled = true;
-            btn.innerText = "ENREGISTRER...";
+            const pendingResto = allData.find(r => r.nom.toLowerCase() === inputName.toLowerCase() && r.statut === "À faire");
 
+            btn.disabled = true;
             const payload = {
                 nom: inputName,
                 ville: document.getElementById('city').value,
-                note: viewState === "Fait" ? document.getElementById('rating').value : "",
                 statut: viewState,
+                note: viewState === "Fait" ? document.getElementById('rating').value : "",
+                budget: viewState === "Fait" ? document.getElementById('budget').value : "",
+                moment: viewState === "Fait" ? inputMoment : "",
                 commentaire: document.getElementById('comment').value,
                 evaluateur: document.getElementById('user').value
             };
 
-            await fetch(API_URL, {
-                method: 'POST',
+            const method = (pendingResto && viewState === "Fait") ? 'PATCH' : 'POST';
+            const url = method === 'PATCH' ? `${API_URL}/nom/${encodeURIComponent(pendingResto.nom)}` : API_URL;
+
+            await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: [payload] })
+                body: JSON.stringify({ data: method === 'PATCH' ? payload : [payload] })
             });
 
-            finishSubmit();
+            document.getElementById('restoForm').reset();
+            document.querySelector('details').open = false;
+            fetchRestos();
+            btn.disabled = false;
         });
 
-        // Fonction pour mettre à jour une ligne (PATCH)
-        async function updateResto(name, data) {
-            await fetch(`${API_URL}/nom/${encodeURIComponent(name)}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: data })
-            });
-        }
-
-        // Action depuis la pop-up (Passer de À faire à Fait)
         async function submitUpdate() {
-            await updateResto(currentUpdateName, {
+            const updateData = {
                 statut: "Fait",
                 note: document.getElementById('updateRating').value,
+                budget: document.getElementById('updateBudget').value,
+                moment: document.getElementById('updateMoment').value,
                 commentaire: document.getElementById('updateComment').value,
                 evaluateur: document.getElementById('updateUser').value
+            };
+            await fetch(`${API_URL}/nom/${encodeURIComponent(currentUpdateName)}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: updateData })
             });
             closeModal();
             fetchRestos();
         }
 
-        function finishSubmit() {
-            document.getElementById('restoForm').reset();
-            document.querySelector('details').open = false;
-            fetchRestos();
-            document.getElementById('btnSubmit').disabled = false;
-            document.getElementById('btnSubmit').innerText = "ENREGISTRER";
-        }
-
-        // Affichage de la liste
         function render() {
             const container = document.getElementById('listContainer');
             const filtered = allData.filter(r => r.statut === viewState).reverse();
-
-            if (filtered.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-gray-300 italic">Rien ici pour le moment...</div>`;
-                return;
-            }
+            if (filtered.length === 0) { container.innerHTML = `<p class="text-center py-10 text-gray-300 italic">Vide...</p>`; return; }
 
             container.innerHTML = filtered.map(r => `
-                <div class="bg-white p-5 rounded-[1.5rem] border border-gray-100 shadow-sm transition active:scale-95">
+                <div class="bg-white p-5 rounded-[1.5rem] border border-gray-100 shadow-sm">
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
                             <h3 class="font-black text-slate-800 text-lg leading-tight">${r.nom}</h3>
-                            <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-1">📍 ${r.ville}</p>
+                            <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-1">📍 ${r.ville} ${r.moment ? ' • '+r.moment : ''}</p>
                         </div>
                         ${r.statut === 'Fait' 
-                            ? `<div class="text-orange-400 font-bold bg-orange-50 px-2 py-1 rounded-lg text-sm">${"★".repeat(r.note)}</div>`
-                            : `<button onclick="openUpdateModal('${r.nom.replace(/'/g, "\\'")}')" class="bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-black shadow-md shadow-green-100">J'Y SUIS !</button>`
+                            ? `<div class="text-right"><div class="text-orange-400 font-bold text-sm">${"★".repeat(r.note)}</div><div class="text-[10px] font-black text-green-600">${r.budget || ''}</div></div>`
+                            : `<button onclick="openUpdateModal('${r.nom.replace(/'/g, "\\'")}')" class="bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-black shadow-md">J'Y SUIS !</button>`
                         }
                     </div>
                     ${r.commentaire ? `<p class="text-slate-500 text-sm mt-3 border-l-2 border-indigo-50 pl-3 italic">"${r.commentaire}"</p>` : ''}
-                    <div class="mt-4 text-[9px] text-gray-300 font-bold uppercase tracking-widest">— ${r.evaluateur}</div>
+                    <div class="mt-4 text-[9px] text-gray-300 font-bold uppercase">— ${r.evaluateur}</div>
                 </div>
             `).join('');
         }
-
-        // Lancement au chargement
         fetchRestos();
     </script>
 </body>
