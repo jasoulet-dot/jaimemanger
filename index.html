@@ -160,7 +160,31 @@
                 }
             }, 800);
         }
+// --- FONCTION DE VOTE ---
+// Elle met à jour l'affichage immédiatement (Optimistic UI) 
+// puis envoie la donnée à SheetDB
+async function vote(nom, type) {
+    const resto = allData.find(r => r.nom === nom);
+    
+    // On initialise à 0 si la cellule est vide dans le Sheet
+    const currentVotes = parseInt(resto[type] || 0);
+    const newData = {};
+    newData[type] = currentVotes + 1;
 
+    // Mise à jour visuelle instantanée pour la réactivité
+    resto[type] = currentVotes + 1;
+    render();
+
+    try {
+        await fetch(`${API_URL}/nom/${encodeURIComponent(nom)}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: newData })
+        });
+    } catch (e) {
+        console.error("Erreur lors du vote:", e);
+    }
+}
         function render(highlightName = null) {
             const container = document.getElementById('listContainer');
             let filtered = [];
@@ -202,14 +226,28 @@
                         ? `<div class="text-right"><div class="text-orange-400 font-bold text-sm">${"★".repeat(r.note)}</div><div class="text-[10px] font-black text-green-600">${r.budget || ''}</div></div>`
                         : `<button onclick="openUpdateModal('${r.nom.replace(/'/g, "\\'")}')" class="bg-green-500 text-white px-4 py-2 rounded-xl text-[10px] font-black shadow-md">J'Y SUIS !</button>`
                     }
-                </div>
-                
-                <!-- Section Commentaire + Auteur en gris discret -->
+                     <!-- Section Commentaire + Auteur en gris discret+ likes/dislikes -->
                 ${(commentText || authorText) ? `
                     <p class="text-slate-400 text-xs mt-3 border-l-2 border-indigo-50 pl-3 italic">
                         ${commentText}${authorText}
                     </p>
                 ` : ''}
+				 <div class="text-right">
+                    ${r.statut === 'Fait' 
+                        ? `<div>
+                            <div class="flex gap-2 justify-end">
+                                <button onclick="vote('${r.nom.replace(/'/g, "\\'")}', 'likes')" class="flex items-center gap-1 text-[11px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded-lg active:scale-90 transition">
+                                    👍 ${r.likes || 0}
+                                </button>
+                                <button onclick="vote('${r.nom.replace(/'/g, "\\'")}', 'dislikes')" class="flex items-center gap-1 text-[11px] font-bold bg-red-50 text-red-600 px-2 py-1 rounded-lg active:scale-90 transition">
+                                    👎 ${r.dislikes || 0}
+                                </button>
+                            </div>
+                           </div>`
+                        : `<button onclick="openUpdateModal('${r.nom.replace(/'/g, "\\'")}')" class="bg-green-500 text-white px-4 py-2 rounded-xl text-[10px] font-black shadow-md">J'Y SUIS !</button>`
+                    }
+                </div>
+                </div>
             </div>
             `}).join('');
         }
