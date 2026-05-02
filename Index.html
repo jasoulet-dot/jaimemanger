@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Napster Resto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+        .tab-active { background-color: #4f46e5; color: white; }
+        .tab-inactive { color: #9ca3af; }
+    </style>
+</head>
+<body class="bg-slate-50 p-4 max-w-md mx-auto pb-20">
+
+    <header class="text-center py-6">
+        <h1 class="text-3xl font-extrabold text-indigo-600 tracking-tight">🍴 MyRestos</h1>
+        <p class="text-gray-400 text-xs mt-1 uppercase tracking-widest font-semibold">Le Napster du Goût</p>
+    </header>
+
+    <!-- Sélecteur de mode (Ajout) -->
+    <div class="flex bg-white rounded-2xl p-1 mb-6 shadow-sm border border-gray-100">
+        <button id="tabFait" onclick="switchMode('Fait')" class="flex-1 py-3 rounded-xl font-bold text-sm transition tab-active">J'ai testé</button>
+        <button id="tabAFaire" onclick="switchMode('À faire')" class="flex-1 py-3 rounded-xl font-bold text-sm transition tab-inactive">À découvrir</button>
+    </div>
+
+    <!-- Formulaire d'ajout -->
+    <form id="restoForm" class="bg-white p-6 rounded-3xl shadow-xl shadow-indigo-100/50 border border-gray-100 mb-10">
+        <div class="space-y-3">
+            <input type="text" id="name" placeholder="Nom du restaurant" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 ring-indigo-300 transition border-none" required>
+            <input type="text" id="city" placeholder="Ville" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 ring-indigo-300 transition border-none" required>
+            
+            <div id="ratingSection" class="flex justify-between items-center p-2">
+                <label class="text-gray-500 text-sm font-bold uppercase">Note</label>
+                <select id="rating" class="bg-transparent text-orange-500 font-bold text-xl outline-none cursor-pointer">
+                    <option value="5">⭐⭐⭐⭐⭐</option>
+                    <option value="4">⭐⭐⭐⭐</option>
+                    <option value="3">⭐⭐⭐</option>
+                    <option value="2">⭐⭐</option>
+                    <option value="1">⭐</option>
+                </select>
+            </div>
+
+            <input type="text" id="comment" placeholder="Un petit commentaire ?" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 ring-indigo-300 transition border-none">
+            <input type="text" id="user" placeholder="Ton nom (Évaluateur)" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 ring-indigo-300 transition border-none text-indigo-600 font-medium" required>
+
+            <button type="submit" id="btnSubmit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 mt-2">ENREGISTRER</button>
+        </div>
+    </form>
+
+    <!-- Listes -->
+    <div class="space-y-8">
+        <section>
+            <h2 class="text-indigo-900 font-black mb-4 uppercase text-[10px] tracking-[0.2em] flex items-center">
+                <span class="bg-indigo-100 p-1 px-2 rounded mr-2">🚀</span> À découvrir prochainement
+            </h2>
+            <div id="listAFaire" class="space-y-3 text-center"></div>
+        </section>
+
+        <section>
+            <h2 class="text-slate-900 font-black mb-4 uppercase text-[10px] tracking-[0.2em] flex items-center">
+                <span class="bg-slate-200 p-1 px-2 rounded mr-2">✅</span> Déjà testés
+            </h2>
+            <div id="listFait" class="space-y-3"></div>
+        </section>
+    </div>
+
+    <!-- POPUP (MODAL) POUR VALIDER UN RESTO -->
+    <div id="updateModal" class="modal flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl scale-in">
+            <h2 id="modalTitle" class="text-2xl font-black text-gray-800 mb-2">Verdict ?</h2>
+            <p id="modalSubTitle" class="text-gray-400 text-sm mb-6"></p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Quelle note ?</label>
+                    <select id="updateRating" class="w-full mt-1 p-4 bg-slate-50 rounded-2xl text-orange-500 font-bold text-lg outline-none">
+                        <option value="5">⭐⭐⭐⭐⭐</option>
+                        <option value="4">⭐⭐⭐⭐</option>
+                        <option value="3">⭐⭐⭐</option>
+                        <option value="2">⭐⭐</option>
+                        <option value="1">⭐</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Ton avis</label>
+                    <textarea id="updateComment" class="w-full mt-1 p-4 bg-slate-50 rounded-2xl outline-none" rows="2" placeholder="C'était comment ?"></textarea>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Qui valide ?</label>
+                    <input type="text" id="updateUser" class="w-full mt-1 p-4 bg-slate-50 rounded-2xl outline-none font-bold text-indigo-600">
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button onclick="closeModal()" class="flex-1 py-4 text-gray-400 font-bold">Plus tard</button>
+                    <button onclick="submitUpdate()" class="flex-1 py-4 bg-green-500 text-white rounded-2xl font-bold shadow-lg shadow-green-100">VALIDER !</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://sheetdb.io/api/v1/lwe5ipx4o126r"; 
+        let currentStatus = "Fait";
+        let selectedRestoName = "";
+
+        function switchMode(status) {
+            currentStatus = status;
+            const isFait = status === 'Fait';
+            document.getElementById('tabFait').className = `flex-1 py-3 rounded-xl font-bold text-sm transition ${isFait ? 'tab-active shadow-md' : 'tab-inactive'}`;
+            document.getElementById('tabAFaire').className = `flex-1 py-3 rounded-xl font-bold text-sm transition ${!isFait ? 'tab-active shadow-md' : 'tab-inactive'}`;
+            document.getElementById('ratingSection').style.display = isFait ? 'flex' : 'none';
+        }
+
+        function openModal(name) {
+            selectedRestoName = name;
+            document.getElementById('modalSubTitle').innerText = name;
+            document.getElementById('updateModal').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('updateModal').style.display = 'none'; }
+
+        async function submitUpdate() {
+            const data = {
+                statut: "Fait",
+                note: document.getElementById('updateRating').value,
+                commentaire: document.getElementById('updateComment').value,
+                evaluateur: document.getElementById('updateUser').value
+            };
+
+            await fetch(`${API_URL}/nom/${encodeURIComponent(selectedRestoName)}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: data })
+            });
+
+            closeModal();
+            fetchRestos();
+        }
+
+        async function fetchRestos() {
+            try {
+                const res = await fetch(API_URL);
+                const data = await res.json();
+                render(data);
+            } catch (e) { console.error("Erreur flux", e); }
+        }
+
+        document.getElementById('restoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerText = "PATIENTEZ...";
+
+            const newResto = {
+                nom: document.getElementById('name').value,
+                ville: document.getElementById('city').value,
+                note: currentStatus === "Fait" ? document.getElementById('rating').value : "",
+                statut: currentStatus,
+                commentaire: document.getElementById('comment').value,
+                evaluateur: document.getElementById('user').value
+            };
+
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: [newResto] })
+            });
+
+            document.getElementById('restoForm').reset();
+            fetchRestos();
+            btn.disabled = false;
+            btn.innerText = "ENREGISTRER";
+        });
+
+        function render(list) {
+            const listFait = document.getElementById('listFait');
+            const listAFaire = document.getElementById('listAFaire');
+            
+            const itemsFait = list.filter(r => r.statut === "Fait").reverse();
+            const itemsAFaire = list.filter(r => r.statut === "À faire").reverse();
+
+            listFait.innerHTML = itemsFait.map(r => `
+                <div class="bg-white p-5 rounded-[1.5rem] border border-gray-100 shadow-sm relative overflow-hidden">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-black text-slate-800 text-lg leading-tight">${r.nom}</h3>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">📍 ${r.ville}</p>
+                        </div>
+                        <div class="text-orange-400 text-sm font-bold bg-orange-50 px-2 py-1 rounded-lg">
+                            ${"★".repeat(r.note)}
+                        </div>
+                    </div>
+                    <p class="text-slate-500 text-sm mt-3 italic">"${r.commentaire || 'Pas d\'avis'}"</p>
+                    <div class="mt-4 text-[9px] text-indigo-400 font-bold uppercase tracking-widest">— ${r.evaluateur}</div>
+                </div>
+            `).join('');
+
+            listAFaire.innerHTML = itemsAFaire.map(r => `
+                <div class="bg-white/50 p-5 rounded-[1.5rem] border border-dashed border-indigo-200 flex justify-between items-center group">
+                    <div>
+                        <h3 class="font-bold text-indigo-900">${r.nom}</h3>
+                        <p class="text-[10px] text-indigo-300 font-medium">📍 ${r.ville}</p>
+                    </div>
+                    <button onclick="openModal('${r.nom.replace(/'/g, "\\'")}')" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition">VALIDER</button>
+                </div>
+            `).join('') || "<p class='text-gray-300 text-xs italic'>Aucun projet en vue</p>";
+        }
+
+        fetchRestos();
+    </script>
+</body>
+</html>
