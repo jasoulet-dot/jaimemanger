@@ -6,6 +6,16 @@
     <title>MyRestos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+	@keyframes winnerPulse {
+    0% { transform: scale(1.02); shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+    70% { transform: scale(1.03); shadow: 0 0 0 15px rgba(99, 102, 241, 0); }
+    100% { transform: scale(1.02); }
+}
+
+.random-winner {
+    animation: winnerPulse 0.6s ease-out;
+    background-color: #f5f3ff !important; /* Un très léger fond indigo */
+}
         .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); }
         .tab-active { background-color: #4f46e5; color: white; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4); }
         @keyframes bounce-subtle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
@@ -238,40 +248,68 @@
     });
 }
 
-       function render(highlightName = null) {
+     function render(highlightName = null) {
     const container = document.getElementById('listContainer');
     let filtered = getFilteredData().reverse();
     
-    container.innerHTML = filtered.map(r => {
-        const tags = (r.categorie || "").split(',').filter(x => x.trim() !== "");
-        let momentIcon = r.moment === "Midi" ? "☀️" : (r.moment === "Soir" ? "🌙" : "🌗");
+   		container.innerHTML = filtered.map(r => {
+    const tags = (r.categorie || "").split(',').filter(x => x.trim() !== "");
+    let momentIcon = r.moment === "Midi" ? "☀️" : (r.moment === "Soir" ? "🌙" : "🌗");
+    const isFait = r.statut === 'Fait';
+    const isWinner = highlightName === r.nom; // On définit le gagnant ici
 
-        return `
-        <div id="resto-${r.nom.replace(/\s+/g, '')}" class="relative bg-white p-5 rounded-[1.5rem] border ${highlightName === r.nom ? 'random-winner' : 'border-gray-100'} shadow-sm flex flex-col gap-2 transition-all">
-            
-            <div class="flex justify-between items-start">
-                <div class="flex-1">
-                    <h3 class="font-black text-slate-800 text-lg leading-tight underline decoration-indigo-100 underline-offset-4">${r.nom}</h3>
-                    <div class="flex flex-wrap items-center gap-1.5 mt-1">
-                        <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">📍 ${r.ville}</p>
-                        ${tags.map(c => `<span class="bg-indigo-50 text-indigo-600 text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">${c}</span>`).join('')}
-                    </div>
-                </div>
-                <div class="text-right">
-                    ${r.statut === 'Fait' ? `
-                        <div class="text-orange-400 font-bold text-sm">${"★".repeat(r.note)}</div>
-                        <div class="text-[10px] font-black text-green-600 mt-0.5">${r.budget || ''}</div>
-                        <div class="text-sm mt-0.5">${momentIcon}</div>
-                    ` : `<button class="bg-green-500 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase">À tester</button>`}
-                </div>
+    return `
+    <div id="resto-${r.nom.replace(/\s+/g, '')}" 
+         class="bg-white p-3 rounded-[1.8rem] shadow-sm border flex flex-col mb-2 transition-all duration-500 
+         ${isWinner ? 'ring-4 ring-indigo-500 border-indigo-500 scale-[1.02] z-10 shadow-xl random-winner' : 'border-gray-100'}">
+        
+        <!-- LIGNE 1 : NOM ET BOUTON ACTION -->
+        <div class="flex justify-between items-center">
+             <h3 class="font-black text-slate-800 text-lg tracking-tight truncate pr-2">${r.nom}</h3>
+                ${!isFait ? `
+                    <button class="bg-[#1ED760] text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase shadow-sm">J'Y SUIS !</button>
+                ` : `
+                    <div class="text-orange-400 text-[10px] tracking-widest">${"★".repeat(r.note)}</div>
+                `}
             </div>
 
-            ${r.commentaire ? `<p class="text-slate-400 text-xs border-l-2 border-indigo-50 pl-3 italic mb-4">"${r.commentaire}"</p>` : ''}
+            <!-- LIGNE 2 : VILLE ET TAGS (COLLÉS) -->
+            <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
+                <div class="flex items-center gap-0.5">
+                    <span class="text-[10px]">📍</span>
+                    <span class="text-indigo-400 font-bold uppercase text-[9px] tracking-widest">${r.ville}</span>
+                </div>
+                ${tags.map(c => `<span class="bg-indigo-50 text-indigo-600 text-[8px] px-2 py-0.5 rounded-full font-black uppercase">${c.trim()}</span>`).join('')}
+                ${isFait ? `<span class="text-[10px] ml-auto">${momentIcon}</span>` : ''}
+            </div>
 
-            <!-- PETIT BOUTON CAT SUR CHAQUE CARTE -->
-            <button onclick="openQuickEdit('${r.nom.replace(/'/g, "\\'")}')" class="absolute bottom-3 right-3 bg-slate-100 hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 px-2 py-1 rounded-lg text-[9px] font-black uppercase transition-colors">
-                Cat
-            </button>
+            <!-- LIGNE 3 : COMMENTAIRE (DISCRET) -->
+            ${r.commentaire ? `
+                <div class="mt-1.5 border-l-2 border-indigo-50 pl-2">
+                    <p class="text-slate-400 text-[11px] italic leading-tight line-clamp-2">"${r.commentaire}"</p>
+                </div>
+            ` : ''}
+
+            <!-- LIGNE 4 : ACTIONS (COMPACTÉES) -->
+            <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-50">
+                <button onclick="openQuickEdit('${r.nom.replace(/'/g, "\\'")}')" class="bg-slate-50 text-slate-400 px-3 py-1 rounded-lg text-[9px] font-black uppercase">
+                    Cat
+                </button>
+
+                ${isFait ? `
+                    <div class="flex gap-2">
+                        <button onclick="vote('${r.nom.replace(/'/g, "\\'")}', 'likes')" class="flex items-center gap-1 bg-blue-50/50 text-blue-600 px-2 py-1 rounded-lg">
+                            <span class="text-xs">👍</span>
+                            <span class="font-black text-[10px]">${r.likes || 0}</span>
+                        </button>
+                        <button onclick="vote('${r.nom.replace(/'/g, "\\'")}', 'dislikes')" class="flex items-center gap-1 bg-red-50/50 text-red-600 px-2 py-1 rounded-lg">
+                            <span class="text-xs">👎</span>
+                            <span class="font-black text-[10px]">${r.dislikes || 0}</span>
+                        </button>
+                        <span class="text-green-600 font-black text-[10px] self-center ml-1">${r.budget || ''}</span>
+                    </div>
+                ` : ''}
+            </div>
         </div>`;
     }).join('');
 }
