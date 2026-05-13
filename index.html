@@ -2,277 +2,1013 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyRestos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SurprizMe</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
     <style>
-        @keyframes winnerPulse {
-            0% { transform: scale(1.02); shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
-            70% { transform: scale(1.03); shadow: 0 0 0 15px rgba(99, 102, 241, 0); }
-            100% { transform: scale(1.02); }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        /* Tabs */
+        .tab-active { background-color: #4f46e5; color: white; box-shadow: 0 8px 20px -4px rgba(79, 70, 229, 0.45); }
+
+        /* Tag buttons */
+        .tag-btn { transition: all 0.2s ease; }
+        .tag-btn.active {
+            border-color: #4f46e5 !important;
+            background-color: #eef2ff !important;
+            color: #4f46e5 !important;
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.15);
+        }
+
+        /* Winner animation */
+        @keyframes bounce-glow {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
+            25% { transform: scale(1.02); }
+            50% { transform: scale(1.03); box-shadow: 0 0 30px 8px rgba(79, 70, 229, 0.25); }
+            75% { transform: scale(1.02); }
         }
         .random-winner {
-            animation: winnerPulse 0.6s ease-out;
-            background-color: #f5f3ff !important;
+            animation: bounce-glow 0.7s ease-in-out 3;
+            border-color: #4f46e5 !important;
+            ring: 3px solid #4f46e5;
         }
-        .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); }
-        .tab-active { background-color: #4f46e5; color: white; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4); }
-        @keyframes bounce-subtle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-        .random-winner { border: 3px solid #4f46e5 !important; animation: bounce-subtle 0.5s ease-in-out 3; background-color: #f5f3ff !important; }
-        html { scroll-behavior: smooth; }
-        .tag-btn.active { border-color: #4f46e5 !important; background-color: #eef2ff !important; color: #4f46e5 !important; transform: scale(1.05); }
-        #citySuggestions { max-height: 200px; overflow-y: auto; z-index: 100; }
+
+        /* Like feedback */
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
+        .pop-anim { animation: pop 0.3s ease; }
+
+        /* Modal overlay */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px); z-index: 100;
+            display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+        }
+
+        /* City suggestions */
+        #citySuggestions { max-height: 180px; overflow-y: auto; z-index: 100; }
+        #citySuggestions div:hover { background-color: #eef2ff; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 9999px; }
+
+        /* Loading spinner */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { animation: spin 0.8s linear infinite; }
     </style>
 </head>
-<body class="bg-slate-50 p-4 max-w-md mx-auto pb-20">
+<body class="bg-slate-50 min-h-screen">
+    <div class="max-w-md mx-auto px-4 pb-24">
 
-    <header class="sticky top-0 z-40 bg-slate-50/90 backdrop-blur-md pt-4 pb-2 mb-2 px-1">
-        <div class="flex justify-between items-center bg-white p-3 rounded-[1.8rem] border border-gray-100 shadow-sm">
-            <div class="flex items-center gap-2 pl-1" onclick="location.reload()" style="cursor:pointer">
-                <span class="text-2xl">🍴</span>
-                <h1 class="text-xl font-black text-indigo-600 tracking-tight">MyRestos</h1>
+        <!-- HEADER -->
+        <header class="sticky top-0 z-40 bg-slate-50/90 backdrop-blur-xl pt-4 pb-2">
+            <div class="flex justify-between items-center bg-white p-3 rounded-3xl border border-gray-100 shadow-sm">
+                <div class="flex items-center gap-2 pl-1 cursor-pointer select-none" onclick="location.reload()">
+                    <span class="text-2xl">🍴</span>
+                    <h1 class="text-xl font-black text-indigo-600 tracking-tight">SurprizMe</h1>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="scrollToAdd()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-md transition-all active:scale-90" title="Ajouter">
+                        <span class="text-2xl leading-none">+</span>
+                    </button>
+                    <button onclick="pickRandom()" class="bg-amber-400 hover:bg-amber-500 text-white px-3 h-10 flex items-center gap-1.5 rounded-xl shadow-md transition-all active:scale-90" title="SurprizMe">
+                        <span class="text-[9px] font-black uppercase tracking-tight">Let's Go</span>
+                        <span class="text-lg">🎲</span>
+                    </button>
+                </div>
             </div>
-            <div class="flex items-center gap-2">
-                <button onclick="scrollToAdd()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-md transition active:scale-90">
-                    <span class="text-2xl font-light">+</span>
-                </button>
-                <button onclick="pickRandom()" class="bg-amber-400 hover:bg-amber-500 text-white px-4 h-10 flex items-center gap-2 rounded-xl shadow-md transition active:scale-90">
-                    <span class="text-[10px] font-black uppercase tracking-tighter">SURPRIZME</span><span class="text-xl">🎲</span>
-                </button>
+        </header>
+
+        <!-- TABS -->
+        <nav class="sticky top-[76px] z-30 pt-1 mb-5">
+            <div class="flex bg-white/80 backdrop-blur-xl rounded-2xl p-1 shadow-sm border border-gray-100">
+                <button id="btnTabFait" onclick="setViewState('Fait')" class="flex-1 py-3 rounded-xl transition-all text-[11px] font-black uppercase tracking-wide tab-active">Testés</button>
+                <button id="btnTabAFaire" onclick="setViewState('À faire')" class="flex-1 py-3 rounded-xl transition-all text-[11px] font-black uppercase tracking-wide text-gray-400">À découvrir</button>
+                <button id="btnTabSearch" onclick="setViewState('Recherche')" class="flex-1 py-3 rounded-xl transition-all text-[11px] font-black uppercase tracking-wide text-gray-400">🔍 Chercher</button>
+            </div>
+        </nav>
+
+        <!-- SEARCH SECTION -->
+        <div id="searchSection" class="hidden mb-6">
+            <div class="bg-white p-5 rounded-3xl shadow-lg border border-indigo-50">
+                <input type="text" id="searchQuery" oninput="render()" placeholder="Nom ou ville..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-300 placeholder:font-normal">
+                <p class="text-[9px] font-black text-gray-300 uppercase mt-3 mb-2 ml-1 tracking-[0.2em] text-center">Filtrer par catégorie</p>
+                <div id="searchTagsContainer" class="flex flex-wrap justify-center gap-2 mb-3"></div>
+                <select id="searchBudget" onchange="render()" class="w-full p-3 bg-slate-50 rounded-2xl outline-none text-gray-500 font-bold text-sm mt-2">
+                    <option value="">Tous les budgets</option>
+                    <option value="€">€ — Petit budget</option>
+                    <option value="€€">€€ — Moyen</option>
+                    <option value="€€€">€€€ — Élevé</option>
+                    <option value="€€€">€€€€ — Très Élevé</option>
+                </select>
             </div>
         </div>
-    </header>
 
-    <nav id="mainNav" class="sticky top-[80px] z-30 mb-6 pt-1">
-        <div class="flex bg-white/80 backdrop-blur-md rounded-2xl p-1 shadow-sm border border-gray-100 font-bold text-[10px]">
-            <button id="btnTabFait" onclick="setViewState('Fait')" class="flex-1 py-3 rounded-xl transition tab-active">J'ai testé</button>
-            <button id="btnTabAFaire" onclick="setViewState('À faire')" class="flex-1 py-3 rounded-xl transition text-gray-400">À découvrir</button>
-            <button id="btnTabSearch" onclick="setViewState('Recherche')" class="flex-1 py-3 rounded-xl transition text-gray-400">🔍 Chercher</button>
-        </div>
-    </nav>
+        <!-- ADD FORM -->
+        <details id="addSection" class="mb-6 group">
+            <summary class="list-none bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-600 p-4 rounded-2xl font-black text-center cursor-pointer text-sm select-none active:scale-[0.98] transition-transform">
+                + Ajouter un restaurant
+            </summary>
+            <form id="restoForm" class="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 mt-3 space-y-4">
+                <input type="text" id="formName" autocomplete="off" placeholder="Nom du restaurant" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-bold placeholder:font-normal placeholder:text-gray-300" required>
 
-    <div id="searchSection" class="hidden mb-8 space-y-3">
-        <div class="bg-white p-4 rounded-3xl shadow-xl border border-indigo-100">
-            <input type="text" id="searchQuery" oninput="render()" placeholder="Nom ou ville..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none mb-3 text-sm">
-            <p class="text-[9px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest text-center">Catégories</p>
-            <div id="searchTagsContainer" class="flex flex-wrap justify-center gap-2 mb-3"></div>
-            <select id="searchBudget" onchange="render()" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-gray-600 font-bold text-sm">
-                <option value="">Tous les budgets</option><option value="€">€</option><option value="€€">€€</option><option value="€€€">€€€</option><option value="€€€€">€€€€</option>
-            </select>
-        </div>
-    </div>
-
-    <details id="addSection" class="mb-8 group">
-        <summary class="list-none bg-indigo-50 text-indigo-700 p-4 rounded-2xl font-bold text-center cursor-pointer group-open:mb-4"> + Ajouter un restaurant</summary>
-        <form id="restoForm" class="bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
-            <div class="space-y-4">
-                <input type="text" id="name" placeholder="Nom du restaurant" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm" required>
-                
                 <div class="relative">
-                    <input type="text" id="city" autocomplete="off" placeholder="Ville..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm" required>
+                    <input type="text" id="formCity" autocomplete="off" placeholder="Ville..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-bold placeholder:font-normal placeholder:text-gray-300" required>
                     <div id="citySuggestions" class="absolute left-0 right-0 bg-white border border-gray-100 rounded-2xl shadow-xl hidden mt-1 overflow-hidden"></div>
                 </div>
 
                 <div>
-                    <p class="text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Cuisine</p>
+                    <p class="text-[9px] font-black text-gray-300 uppercase mb-2 ml-1 tracking-[0.2em]">Statut</p>
+                    <div class="flex gap-2">
+                        <button type="button" id="btnStatutFait" onclick="setFormStatut('Fait')" class="flex-1 py-3 rounded-xl text-[11px] font-black uppercase border-2 transition-all border-indigo-500 bg-indigo-50 text-indigo-600">Testé ✓</button>
+                        <button type="button" id="btnStatutAFaire" onclick="setFormStatut('À faire')" class="flex-1 py-3 rounded-xl text-[11px] font-black uppercase border-2 transition-all border-gray-200 text-gray-400">À découvrir</button>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-[9px] font-black text-gray-300 uppercase mb-2 ml-1 tracking-[0.2em]">Cuisine</p>
                     <div class="flex flex-wrap gap-2" id="tagContainer"></div>
                 </div>
-                <div id="formFaitExtras" class="space-y-3">
+
+                <div id="formExtrasBlock" class="space-y-3">
                     <div class="flex gap-2">
-                        <select id="budget" class="flex-1 p-4 bg-slate-50 rounded-2xl outline-none text-sm"><option value="">Budget ?</option><option value="€">€</option><option value="€€">€€</option><option value="€€€">€€€</option><option value="€€€€">€€€€</option></select>
-                        <select id="moment" class="flex-1 p-4 bg-slate-50 rounded-2xl outline-none text-sm"><option value="Midi">☀️ Midi</option><option value="Soir">🌙 Soir</option><option value="Midi et Soir">🌗 Les deux</option></select>
+                        <select id="formBudget" class="flex-1 p-4 bg-slate-50 rounded-2xl outline-none text-sm font-bold text-gray-500">
+                            <option value="">Budget ?</option>
+                            <option value="€">€</option>
+                            <option value="€€">€€</option>
+                            <option value="€€€">€€€</option>
+                            <option value="€€€€">€€€€</option>
+                        </select>
+                        <select id="formMoment" class="flex-1 p-4 bg-slate-50 rounded-2xl outline-none text-sm font-bold text-gray-500">
+                            <option value="Midi">☀️ Midi</option>
+                            <option value="Soir">🌙 Soir</option>
+                            <option value="Les deux">🌗 Les deux</option>
+                        </select>
                     </div>
-                    <select id="rating" class="w-full p-4 bg-slate-50 rounded-2xl text-orange-500 font-bold text-xl outline-none"><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option></select>
+                    <select id="formRating" class="w-full p-4 bg-slate-50 rounded-2xl text-orange-400 font-black text-lg outline-none">
+                        <option value="5">★★★★★</option>
+                        <option value="4">★★★★</option>
+                        <option value="3">★★★</option>
+                        <option value="2">★★</option>
+                        <option value="1">★</option>
+                    </select>
                 </div>
-                <input type="text" id="comment" placeholder="Commentaire..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm">
-                <input type="text" id="user" placeholder="Ton nom" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-indigo-600 text-sm" required>
-                <button type="submit" id="btnSubmit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg">ENREGISTRER</button>
-            </div>
-        </form>
-    </details>
 
-    <!-- MODAL QUICK EDIT -->
-    <div id="quickEditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-6">
-        <div class="bg-white w-full max-w-xs rounded-[2rem] p-6 shadow-2xl">
-            <h3 id="quickEditTitle" class="font-black text-slate-800 text-center mb-4"></h3>
-            <div id="quickEditTags" class="flex flex-wrap gap-2 justify-center mb-6"></div>
-            <button onclick="closeQuickEdit()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm">Fermer</button>
+                <input type="text" id="formComment" placeholder="Commentaire..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm placeholder:text-gray-300">
+                <input type="text" id="formUser" placeholder="Ton nom" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-black text-indigo-600 text-sm placeholder:font-normal placeholder:text-gray-300" required>
+
+                <button type="submit" id="btnSubmit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-wide shadow-lg shadow-indigo-200 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+                    Enregistrer
+                </button>
+            </form>
+        </details>
+
+        <!-- COUNTER -->
+        <div id="counterBar" class="mb-4 text-center">
+            <span id="counterText" class="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]"></span>
+        </div>
+
+        <!-- LOADING -->
+        <div id="loadingState" class="flex flex-col items-center justify-center py-16">
+            <div class="w-8 h-8 border-3 border-indigo-200 border-t-indigo-600 rounded-full spinner mb-3"></div>
+            <p class="text-xs text-gray-400 font-bold">Chargement...</p>
+        </div>
+
+        <!-- EMPTY STATE -->
+        <div id="emptyState" class="hidden flex-col items-center justify-center py-16">
+            <span class="text-5xl mb-3">🍽️</span>
+            <p class="text-sm font-bold text-gray-400">Aucun restaurant ici</p>
+            <p class="text-xs text-gray-300 mt-1">Ajoute ton premier resto !</p>
+        </div>
+
+        <!-- LIST -->
+        <div id="listContainer" class="space-y-3"></div>
+    </div>
+
+    <!-- MODAL: QUICK EDIT (TAG CAT) -->
+    <div id="quickEditModal" class="modal-overlay hidden" onclick="handleModalOverlayClick(event, 'quickEditModal')">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-1">
+                <h3 class="font-black text-slate-800 text-base tracking-tight">Modifier les tags</h3>
+                <button onclick="closeQuickEdit()" class="text-gray-300 hover:text-gray-500 text-xl transition">✕</button>
+            </div>
+            <p id="quickEditSubtitle" class="text-[10px] font-bold text-indigo-400 uppercase tracking-wide mb-4"></p>
+            <div id="quickEditTags" class="flex flex-wrap gap-2 justify-center mb-5 min-h-[60px]"></div>
+            <button onclick="saveQuickEdit()" id="btnSaveQuickEdit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-black text-sm uppercase tracking-wide transition-all active:scale-[0.98] disabled:opacity-50">
+                Enregistrer
+            </button>
         </div>
     </div>
 
-    <!-- MODAL ADMIN SECRET -->
-    <div id="adminModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[110] hidden items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-black text-slate-800 tracking-tighter">Gestion Catégories</h2>
-                <button onclick="toggleAdmin()" class="text-slate-300 text-2xl">✕</button>
+    <!-- MODAL: ADMIN -->
+    <div id="adminModal" class="modal-overlay hidden" onclick="handleModalOverlayClick(event, 'adminModal')">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-5">
+                <div>
+                    <h2 class="text-lg font-black text-slate-800 tracking-tight">Catégories</h2>
+                    <p class="text-[9px] font-bold text-gray-300 uppercase tracking-[0.15em]">Mode administrateur</p>
+                </div>
+                <button onclick="closeAdmin()" class="text-gray-300 hover:text-gray-500 text-xl transition">✕</button>
             </div>
-            <div id="adminCategoryList" class="flex flex-wrap gap-2 mb-8 max-h-60 overflow-y-auto p-1"></div>
+            <div id="adminCategoryList" class="flex flex-wrap gap-2 mb-6 max-h-52 overflow-y-auto p-1"></div>
             <div class="flex gap-2">
-                <input type="text" id="newCatInput" placeholder="Nouvelle catégorie..." class="flex-1 bg-slate-50 border-none rounded-2xl px-4 py-3 text-sm outline-none">
-                <button onclick="addCategory()" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-sm uppercase">Add</button>
+                <input type="text" id="newCatInput" placeholder="Nouvelle catégorie..." class="flex-1 bg-slate-50 rounded-2xl px-4 py-3 text-sm outline-none font-bold placeholder:font-normal placeholder:text-gray-300">
+                <button onclick="addCategory()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl font-black text-xs uppercase transition-all active:scale-95">Ajouter</button>
             </div>
         </div>
     </div>
 
-    <div id="listContainer" class="space-y-4"></div>
+    <!-- MODAL: EDIT RESTAURANT -->
+    <div id="editModal" class="modal-overlay hidden" onclick="handleModalOverlayClick(event, 'editModal')">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl max-h-[85vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-black text-slate-800 text-base tracking-tight">Modifier le resto</h3>
+                <button onclick="closeEditModal()" class="text-gray-300 hover:text-gray-500 text-xl transition">✕</button>
+            </div>
+            <form id="editForm" class="space-y-3">
+                <input type="hidden" id="editOriginalName">
+                <input type="text" id="editName" placeholder="Nom" class="w-full p-3 bg-slate-50 rounded-xl outline-none text-sm font-bold" required>
+                <input type="text" id="editCity" placeholder="Ville" class="w-full p-3 bg-slate-50 rounded-xl outline-none text-sm font-bold" required>
+                <div class="flex gap-2">
+                    <select id="editBudget" class="flex-1 p-3 bg-slate-50 rounded-xl outline-none text-sm font-bold">
+                        <option value="">Budget</option><option value="€">€</option><option value="€€">€€</option><option value="€€€">€€€</option>
+                    </select>
+                    <select id="editMoment" class="flex-1 p-3 bg-slate-50 rounded-xl outline-none text-sm font-bold">
+                        <option value="Midi">☀️ Midi</option><option value="Soir">🌙 Soir</option><option value="Les deux">🌗 Les deux</option>
+                    </select>
+                </div>
+                <select id="editRating" class="w-full p-3 bg-slate-50 rounded-xl text-orange-400 font-black outline-none">
+                    <option value="5">★★★★★</option><option value="4">★★★★</option><option value="3">★★★</option><option value="2">★★</option><option value="1">★</option>
+                </select>
+                <select id="editStatut" class="w-full p-3 bg-slate-50 rounded-xl outline-none text-sm font-bold">
+                    <option value="Fait">Testé</option><option value="À faire">À découvrir</option>
+                </select>
+                <input type="text" id="editComment" placeholder="Commentaire" class="w-full p-3 bg-slate-50 rounded-xl outline-none text-sm">
+                <input type="text" id="editUser" placeholder="Évaluateur" class="w-full p-3 bg-slate-50 rounded-xl outline-none text-sm font-bold text-indigo-600">
+                <div class="flex gap-2 pt-2">
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-black text-xs uppercase transition-all active:scale-95">Sauvegarder</button>
+                    <button type="button" onclick="deleteResto()" class="bg-red-500 hover:bg-red-600 text-white px-5 py-3 rounded-xl font-black text-xs uppercase transition-all active:scale-95">Suppr.</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
-    const API_URL = "https://sheetdb.io/api/v1/lwe5ipx4o126r"; 
-    const CAT_API_URL = "https://sheetdb.io/api/v1/lwe5ipx4o126r?sheet=categories";
-    
+    /* ==============================
+       CONFIG & STATE
+    ============================== */
+    const API_BASE = "https://sheetdb.io/api/v1/lwe5ipx4o126r";
+    const API_RESTOS = API_BASE;
+    const API_CATS = API_BASE + "?sheet=categories";
+
     let allData = [];
     let categories = [];
-    let selectedAddCategories = []; 
-    let selectedSearchCategories = []; 
+    let selectedFormCategories = [];
+    let selectedSearchCategories = [];
+    let formStatut = "Fait";
     let viewState = "Fait";
+    let quickEditRestoName = null;
+    let quickEditSelectedCats = [];
 
-    // --- LOGIQUE ADMIN ---
-    function toggleAdmin() {
-        const modal = document.getElementById('adminModal');
-        const isHidden = modal.classList.contains('hidden');
-        modal.classList.toggle('hidden', !isHidden);
-        modal.classList.toggle('flex', isHidden);
-        if (isHidden) renderAdminCategories();
+    /* ==============================
+       CACHE (sessionStorage)
+    ============================== */
+    function getCachedRestos() {
+        const raw = sessionStorage.getItem("myrestos_data");
+        return raw ? JSON.parse(raw) : null;
     }
 
-    function renderAdminCategories() {
-        const container = document.getElementById('adminCategoryList');
-        container.innerHTML = categories.map(c => `
-            <span class="bg-indigo-50 text-indigo-600 text-[10px] px-3 py-1.5 rounded-full font-black uppercase flex items-center gap-2">
-                ${c} <button onclick="deleteCategory('${c}')" class="text-indigo-300 hover:text-red-500">✕</button>
-            </span>
-        `).join('');
+    function setCachedRestos(data) {
+        sessionStorage.setItem("myrestos_data", JSON.stringify(data));
     }
 
-    async function addCategory() {
-        const name = document.getElementById('newCatInput').value;
-        if(!name) return;
-        await fetch(CAT_API_URL, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data: [{nom: name}]}) });
-        document.getElementById('newCatInput').value = '';
-        await fetchCategories();
-        renderAdminCategories();
+    function getCachedCategories() {
+        const raw = sessionStorage.getItem("myrestos_cats");
+        return raw ? JSON.parse(raw) : null;
     }
 
-    async function deleteCategory(catName) {
-        if (!confirm(`Supprimer la catégorie "${catName}" ?`)) return;
-        await fetch(`${CAT_API_URL}/nom/${encodeURIComponent(catName)}`, { method: 'DELETE' });
-        await fetchCategories();
-        renderAdminCategories();
+    function setCachedCategories(data) {
+        sessionStorage.setItem("myrestos_cats", JSON.stringify(data));
     }
 
-    // --- INTERCEPTION AUTOMATIQUE (SANS CLIC) ---
-    function checkSecretCode() {
-        const nom = document.getElementById('name').value.trim().toLowerCase();
-        const ville = document.getElementById('city').value.trim().toLowerCase();
-        if (nom === 'admin' && ville === 'jya') {
-            document.getElementById('addSection').open = false;
-            document.getElementById('restoForm').reset();
-            toggleAdmin();
+    function invalidateCache() {
+        sessionStorage.removeItem("myrestos_data");
+        sessionStorage.removeItem("myrestos_cats");
+    }
+
+    /* ==============================
+       DATA FETCHING
+    ============================== */
+    async function fetchRestos() {
+        try {
+            const cached = getCachedRestos();
+            if (cached) {
+                allData = cached;
+                hideLoading();
+                render();
+                return;
+            }
+            showLoading();
+            const res = await fetch(API_RESTOS);
+            if (!res.ok) throw new Error("Erreur API restos: " + res.status);
+            const data = await res.json();
+            allData = Array.isArray(data) ? data : [];
+            setCachedRestos(allData);
+            hideLoading();
+            render();
+        } catch (err) {
+            console.error("fetchRestos:", err);
+            hideLoading();
+            showEmpty();
         }
     }
 
-    // Écoute la saisie en temps réel sur le nom et la ville
-    document.getElementById('name').addEventListener('input', checkSecretCode);
-    document.getElementById('city').addEventListener('input', checkSecretCode);
-
-    // --- FORMULAIRE CLASSIQUE ---
-    document.getElementById('restoForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const nom = document.getElementById('name').value.trim();
-    const ville = document.getElementById('city').value.trim();
-
-    // 1. CODE SECRET ADMIN (Toujours prioritaire)
-    if (nom.toLowerCase() === 'admin' && ville.toLowerCase() === 'jya') {
-        document.getElementById('addSection').open = false;
-        document.getElementById('restoForm').reset();
-        toggleAdmin();
-        return; 
-    }
-
-    // 2. CONTRÔLE DE DOUBLON
-    const existeDeja = allData.some(r => r.nom.toLowerCase() === nom.toLowerCase());
-    if (existeDeja) {
-        alert(`⚠️ Le restaurant "${nom}" est déjà dans ta liste !`);
-        return; // On arrête tout ici
-    }
-
-    // 3. LOGIQUE NORMALE D'ENREGISTREMENT
-    const btn = document.getElementById('btnSubmit'); 
-    btn.disabled = true;
-            const payload = {
-            nom: document.getElementById('name').value, 
-            ville: document.getElementById('city').value,
-            statut: viewState, categorie: selectedAddCategories.join(','),
-            note: document.getElementById('rating').value, budget: document.getElementById('budget').value,
-            moment: document.getElementById('moment').value, commentaire: document.getElementById('comment').value,
-            evaluateur: document.getElementById('user').value
-        };
-        await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: [payload] }) });
-        location.reload(); 
-    });
-
-    // --- RENDU ---
-    function render(highlightName = null) {
-        const container = document.getElementById('listContainer');
-        let filtered = getFilteredData().reverse();
-        container.innerHTML = filtered.map(r => {
-            const isFait = r.statut === 'Fait';
-            const isWinner = highlightName === r.nom;
-            return `
-            <div class="bg-white p-3 rounded-[1.8rem] shadow-sm border mb-2 transition-all duration-500 ${isWinner ? 'ring-4 ring-indigo-500 border-indigo-500 scale-[1.02] z-10 shadow-xl random-winner' : 'border-gray-100'}">
-                <div class="flex justify-between items-center">
-                    <h3 class="font-black text-slate-800 text-lg tracking-tight truncate">${r.nom}</h3>
-                    ${!isFait ? `<button class="bg-[#1ED760] text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase">J'Y SUIS !</button>` : `<div class="text-orange-400 text-[10px] tracking-widest">${"★".repeat(r.note)}</div>`}
-                </div>
-                <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
-                    <span class="text-indigo-400 font-bold uppercase text-[9px] tracking-widest">📍 ${r.ville}</span>
-                    ${(r.categorie || "").split(',').filter(x => x).map(c => `<span class="bg-indigo-50 text-indigo-600 text-[8px] px-2 py-0.5 rounded-full font-black uppercase">${c.trim()}</span>`).join('')}
-                </div>
-                ${r.commentaire ? `<div class="mt-1.5 border-l-2 border-indigo-50 pl-2"><p class="text-slate-400 text-[11px] italic leading-tight">"${r.commentaire}" — ${r.evaluateur || 'Anonyme'}</p></div>` : ''}
-            </div>`;
-        }).join('');
-    }
-
     async function fetchCategories() {
-        const res = await fetch(CAT_API_URL);
-        const data = await res.json();
-        categories = data.map(c => c.nom);
-        renderCategoryButtons();
+        try {
+            const cached = getCachedCategories();
+            if (cached) {
+                categories = cached;
+                renderFormCategoryButtons();
+                renderSearchCategoryButtons();
+                return;
+            }
+            const res = await fetch(API_CATS);
+            if (!res.ok) throw new Error("Erreur API catégories: " + res.status);
+            const data = await res.json();
+            categories = Array.isArray(data) ? data.map(c => c.nom).filter(Boolean) : [];
+            setCachedCategories(categories);
+            renderFormCategoryButtons();
+            renderSearchCategoryButtons();
+        } catch (err) {
+            console.error("fetchCategories:", err);
+            categories = [];
+        }
     }
 
-    function renderCategoryButtons() {
-        const container = document.getElementById('tagContainer');
-        container.innerHTML = categories.map(c => `<button type="button" onclick="toggleAddTag('${c}')" id="tag-${c}" class="tag-btn border border-slate-100 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase text-slate-400 transition-all">${c}</button>`).join('');
+    /* ==============================
+       LOADING / EMPTY STATES
+    ============================== */
+    function showLoading() {
+        document.getElementById("loadingState").classList.remove("hidden");
+        document.getElementById("listContainer").classList.add("hidden");
+        document.getElementById("emptyState").classList.add("hidden");
     }
 
-    function toggleAddTag(cat) {
-        const idx = selectedAddCategories.indexOf(cat);
-        if(idx > -1) selectedAddCategories.splice(idx,1); else selectedAddCategories.push(cat);
-        document.getElementById(`tag-${cat}`).classList.toggle('active');
+    function hideLoading() {
+        document.getElementById("loadingState").classList.add("hidden");
+        document.getElementById("listContainer").classList.remove("hidden");
     }
 
-    function getFilteredData() {
-        const q = document.getElementById('searchQuery').value.toLowerCase();
-        return allData.filter(r => {
-            const matchTab = (viewState === 'Recherche') ? true : (r.statut === viewState);
-            const matchText = r.nom.toLowerCase().includes(q) || r.ville.toLowerCase().includes(q);
-            return matchTab && matchText;
+    function showEmpty() {
+        document.getElementById("emptyState").classList.remove("hidden");
+        document.getElementById("emptyState").classList.add("flex");
+        document.getElementById("listContainer").classList.add("hidden");
+    }
+
+    function hideEmpty() {
+        document.getElementById("emptyState").classList.add("hidden");
+        document.getElementById("emptyState").classList.remove("flex");
+        document.getElementById("listContainer").classList.remove("hidden");
+    }
+
+    /* ==============================
+       TABS / VIEW STATE
+    ============================== */
+    function setViewState(state) {
+        viewState = state;
+        const tabs = {
+            "Fait": "btnTabFait",
+            "À faire": "btnTabAFaire",
+            "Recherche": "btnTabSearch"
+        };
+        Object.entries(tabs).forEach(([key, id]) => {
+            const el = document.getElementById(id);
+            if (key === state) {
+                el.className = "flex-1 py-3 rounded-xl transition-all text-[11px] font-black uppercase tracking-wide tab-active";
+            } else {
+                el.className = "flex-1 py-3 rounded-xl transition-all text-[11px] font-black uppercase tracking-wide text-gray-400";
+            }
         });
-    }
-
-    function setViewState(s) {
-        viewState = s;
-        document.getElementById('btnTabFait').className = s === 'Fait' ? 'flex-1 py-3 rounded-xl transition tab-active' : 'flex-1 py-3 rounded-xl transition text-gray-400';
-        document.getElementById('btnTabAFaire').className = s === 'À faire' ? 'flex-1 py-3 rounded-xl transition tab-active' : 'flex-1 py-3 rounded-xl transition text-gray-400';
-        document.getElementById('btnTabSearch').className = s === 'Recherche' ? 'flex-1 py-3 rounded-xl transition tab-active' : 'flex-1 py-3 rounded-xl transition text-gray-400';
-        document.getElementById('searchSection').classList.toggle('hidden', s !== 'Recherche');
+        document.getElementById("searchSection").classList.toggle("hidden", state !== "Recherche");
+        if (state === "Recherche") {
+            setTimeout(() => document.getElementById("searchQuery").focus(), 100);
+        }
         render();
     }
 
-    window.onload = () => { fetchRestos(); fetchCategories(); };
-    async function fetchRestos() { const r = await fetch(API_URL); allData = await r.json(); render(); }
+    /* ==============================
+       FILTERING
+    ============================== */
+    function getFilteredData() {
+        const query = (document.getElementById("searchQuery")?.value || "").toLowerCase().trim();
+        const budgetFilter = document.getElementById("searchBudget")?.value || "";
+
+        return allData.filter(r => {
+            // Tab filter
+            if (viewState !== "Recherche" && r.statut !== viewState) return false;
+
+            // Text search
+            if (query) {
+                const matchName = (r.nom || "").toLowerCase().includes(query);
+                const matchCity = (r.ville || "").toLowerCase().includes(query);
+                if (!matchName && !matchCity) return false;
+            }
+
+            // Budget filter (search tab only)
+            if (budgetFilter && r.budget !== budgetFilter) return false;
+
+            // Category filter (search tab only)
+            if (selectedSearchCategories.length > 0) {
+                const restoCats = (r.categorie || "").split(",").map(c => c.trim().toLowerCase());
+                const hasMatch = selectedSearchCategories.some(sc => restoCats.includes(sc.toLowerCase()));
+                if (!hasMatch) return false;
+            }
+
+            return true;
+        });
+    }
+
+    /* ==============================
+       RENDER CARDS
+    ============================== */
+    function render(highlightName = null) {
+        const container = document.getElementById("listContainer");
+        const filtered = getFilteredData().reverse();
+
+        // Counter
+        document.getElementById("counterText").textContent =
+            filtered.length + " restaurant" + (filtered.length > 1 ? "s" : "");
+
+        if (filtered.length === 0) {
+            container.innerHTML = "";
+            showEmpty();
+            return;
+        }
+        hideEmpty();
+
+        container.innerHTML = filtered.map(r => buildCard(r, highlightName)).join("");
+    }
+
+    function buildCard(r, highlightName) {
+        const isFait = r.statut === "Fait";
+        const isWinner = highlightName && highlightName === r.nom;
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((r.nom || "") + " " + (r.ville || ""))}`;
+
+        const momentIcon = r.moment === "Soir" ? "🌙" : r.moment === "Les deux" ? "🌗" : "☀️";
+        const noteDisplay = isFait
+            ? `<span class="text-orange-400 text-xs tracking-widest font-black">${"★".repeat(parseInt(r.note) || 0)}${"☆".repeat(5 - (parseInt(r.note) || 0))}</span>`
+            : `<span class="text-amber-400 text-sm" title="À découvrir">⏳</span>`;
+
+        const catBadges = (r.categorie || "").split(",").filter(c => c.trim()).map(c =>
+            `<span class="bg-indigo-50 text-indigo-500 text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wide">${c.trim()}</span>`
+        ).join("");
+
+        const evaluateur = r.evaluateur ? ` - ${escapeHtml(r.evaluateur)}` : "";
+        const commentBlock = r.commentaire
+            ? `<div class="mt-2 bg-slate-50 rounded-xl p-3">
+                   <p class="text-slate-400 text-[11px] leading-relaxed italic">"${escapeHtml(r.commentaire)}"${evaluateur}</p>
+               </div>`
+            : (r.evaluateur ? `<p class="text-slate-400 text-[11px] italic mt-1.5 ml-1">${evaluateur.trim()}</p>` : "");
+
+        const safeName = escapeAttr(r.nom);
+
+        return `
+        <div id="card-${safeName}" class="bg-white p-4 rounded-3xl shadow-sm border transition-all duration-500 ${isWinner ? "ring-4 ring-indigo-400 border-indigo-400 random-winner shadow-xl" : "border-gray-100 hover:shadow-md"}">
+            <!-- Top row -->
+            <div class="flex justify-between items-start gap-2">
+                <div class="flex-1 min-w-0">
+                    <a href="${mapsUrl}" target="_blank" rel="noopener" class="font-black text-slate-800 text-[15px] tracking-tight hover:text-indigo-600 transition-colors truncate block leading-tight">
+                        ${escapeHtml(r.nom)}
+                    </a>
+                    <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                        <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wide">📍 ${escapeHtml(r.ville || "")}</span>
+                        ${r.budget ? `<span class="bg-emerald-50 text-emerald-600 text-[9px] px-2 py-0.5 rounded-full font-black">${escapeHtml(r.budget)}</span>` : ""}
+                        ${r.moment ? `<span class="text-xs">${momentIcon}</span>` : ""}
+                    </div>
+                </div>
+                <div class="flex-shrink-0">${noteDisplay}</div>
+            </div>
+
+            <!-- Categories -->
+            ${catBadges ? `<div class="flex flex-wrap gap-1 mt-2">${catBadges}</div>` : ""}
+
+            <!-- Comment -->
+            ${commentBlock}
+
+            <!-- Action buttons -->
+            <div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-50">
+                <div class="flex gap-2">
+                    <button onclick="openEditModal('${safeName}')" class="bg-slate-50 text-slate-400 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg transition-all hover:bg-slate-100 active:scale-95 tracking-wide">Éditer</button>
+                    <button onclick="openQuickEdit('${safeName}')" class="bg-indigo-50 text-indigo-500 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg transition-all hover:bg-indigo-100 active:scale-95 tracking-wide">Tag Cat</button>
+                    ${!isFait ? `<button onclick="markAsDone('${safeName}')" class="bg-emerald-50 text-emerald-500 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg transition-all hover:bg-emerald-100 active:scale-95 tracking-wide">J'y suis !</button>` : ""}
+                </div>
+                <div class="flex gap-1">
+                    <button onclick="likeFeedback(this, '👎')" class="text-lg opacity-40 hover:opacity-100 transition-all active:scale-125 p-1" title="Bof">👎</button>
+                    <button onclick="likeFeedback(this, '👍')" class="text-lg opacity-40 hover:opacity-100 transition-all active:scale-125 p-1" title="J'aime">👍</button>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    /* ==============================
+       LIKE / DISLIKE (Visual feedback only)
+    ============================== */
+    function likeFeedback(btn, emoji) {
+        btn.classList.add("pop-anim");
+        btn.style.opacity = "1";
+        setTimeout(() => {
+            btn.classList.remove("pop-anim");
+        }, 300);
+    }
+
+    /* ==============================
+       FORM: STATUT TOGGLE
+    ============================== */
+    function setFormStatut(statut) {
+        formStatut = statut;
+        const btnFait = document.getElementById("btnStatutFait");
+        const btnAFaire = document.getElementById("btnStatutAFaire");
+        const extras = document.getElementById("formExtrasBlock");
+
+        if (statut === "Fait") {
+            btnFait.className = "flex-1 py-3 rounded-xl text-[11px] font-black uppercase border-2 transition-all border-indigo-500 bg-indigo-50 text-indigo-600";
+            btnAFaire.className = "flex-1 py-3 rounded-xl text-[11px] font-black uppercase border-2 transition-all border-gray-200 text-gray-400";
+            extras.classList.remove("hidden");
+        } else {
+            btnAFaire.className = "flex-1 py-3 rounded-xl text-[11px] font-black uppercase border-2 transition-all border-indigo-500 bg-indigo-50 text-indigo-600";
+            btnFait.className = "flex-1 py-3 rounded-xl text-[11px] font-black uppercase border-2 transition-all border-gray-200 text-gray-400";
+            extras.classList.remove("hidden"); // still show extras for A faire
+        }
+    }
+
+    /* ==============================
+       FORM: CATEGORY BUTTONS
+    ============================== */
+    function renderFormCategoryButtons() {
+        const container = document.getElementById("tagContainer");
+        if (!container) return;
+        container.innerHTML = categories.map(c => {
+            const isActive = selectedFormCategories.includes(c);
+            return `<button type="button" onclick="toggleFormTag('${escapeAttr(c)}')" class="tag-btn border border-gray-200 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase text-gray-400 transition-all ${isActive ? "active" : ""}">${escapeHtml(c)}</button>`;
+        }).join("");
+    }
+
+    function toggleFormTag(cat) {
+        const idx = selectedFormCategories.indexOf(cat);
+        if (idx > -1) selectedFormCategories.splice(idx, 1);
+        else selectedFormCategories.push(cat);
+        renderFormCategoryButtons();
+    }
+
+    /* ==============================
+       SEARCH: CATEGORY BUTTONS
+    ============================== */
+    function renderSearchCategoryButtons() {
+        const container = document.getElementById("searchTagsContainer");
+        if (!container) return;
+        container.innerHTML = categories.map(c => {
+            const isActive = selectedSearchCategories.includes(c);
+            return `<button type="button" onclick="toggleSearchTag('${escapeAttr(c)}')" class="tag-btn border border-gray-200 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase text-gray-400 transition-all ${isActive ? "active" : ""}">${escapeHtml(c)}</button>`;
+        }).join("");
+    }
+
+    function toggleSearchTag(cat) {
+        const idx = selectedSearchCategories.indexOf(cat);
+        if (idx > -1) selectedSearchCategories.splice(idx, 1);
+        else selectedSearchCategories.push(cat);
+        renderSearchCategoryButtons();
+        render();
+    }
+
+    /* ==============================
+       CITY AUTOCOMPLETE
+    ============================== */
+    function setupCityAutocomplete() {
+        const input = document.getElementById("formCity");
+        const suggestions = document.getElementById("citySuggestions");
+
+        input.addEventListener("input", () => {
+            const val = input.value.toLowerCase().trim();
+            if (!val || val.length < 1) {
+                suggestions.classList.add("hidden");
+                return;
+            }
+            const cities = [...new Set(allData.map(r => r.ville).filter(Boolean))];
+            const matches = cities.filter(c => c.toLowerCase().includes(val));
+            if (matches.length === 0) {
+                suggestions.classList.add("hidden");
+                return;
+            }
+            suggestions.innerHTML = matches.map(c =>
+                `<div class="px-4 py-2.5 text-sm cursor-pointer transition-colors font-bold text-gray-600" onclick="selectCity('${escapeAttr(c)}')">${escapeHtml(c)}</div>`
+            ).join("");
+            suggestions.classList.remove("hidden");
+        });
+
+        input.addEventListener("blur", () => {
+            setTimeout(() => suggestions.classList.add("hidden"), 200);
+        });
+    }
+
+    function selectCity(city) {
+        document.getElementById("formCity").value = city;
+        document.getElementById("citySuggestions").classList.add("hidden");
+    }
+
+    /* ==============================
+       SECRET HANDSHAKE (Admin)
+    ============================== */
+    function checkSecretCode() {
+        const nom = (document.getElementById("formName").value || "").trim().toLowerCase();
+        const ville = (document.getElementById("formCity").value || "").trim().toLowerCase();
+        if (nom === "admin" && ville === "jya") {
+            document.getElementById("restoForm").reset();
+            document.getElementById("addSection").open = false;
+            selectedFormCategories = [];
+            renderFormCategoryButtons();
+            openAdmin();
+        }
+    }
+
+    /* ==============================
+       ADMIN MODAL
+    ============================== */
+    function openAdmin() {
+        document.getElementById("adminModal").classList.remove("hidden");
+        renderAdminCategories();
+    }
+
+    function closeAdmin() {
+        document.getElementById("adminModal").classList.add("hidden");
+    }
+
+    function renderAdminCategories() {
+        const container = document.getElementById("adminCategoryList");
+        if (categories.length === 0) {
+            container.innerHTML = `<p class="text-xs text-gray-300 italic w-full text-center py-4">Aucune catégorie</p>`;
+            return;
+        }
+        container.innerHTML = categories.map(c => `
+            <span class="bg-indigo-50 text-indigo-600 text-[10px] px-3 py-2 rounded-full font-black uppercase flex items-center gap-2 tracking-wide">
+                ${escapeHtml(c)}
+                <button onclick="deleteCategory('${escapeAttr(c)}')" class="text-indigo-300 hover:text-red-500 transition ml-0.5 text-sm leading-none">✕</button>
+            </span>
+        `).join("");
+    }
+
+    async function addCategory() {
+        const input = document.getElementById("newCatInput");
+        const name = input.value.trim();
+        if (!name) return;
+        if (categories.some(c => c.toLowerCase() === name.toLowerCase())) {
+            alert("Cette catégorie existe déjà !");
+            return;
+        }
+        try {
+            await fetch(API_CATS, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ data: [{ nom: name }] })
+            });
+            input.value = "";
+            sessionStorage.removeItem("myrestos_cats");
+            await fetchCategories();
+            renderAdminCategories();
+        } catch (err) {
+            console.error("addCategory:", err);
+            alert("Erreur lors de l'ajout.");
+        }
+    }
+
+    async function deleteCategory(catName) {
+        if (!confirm(`Supprimer "${catName}" ?`)) return;
+        try {
+            await fetch(`${API_CATS}&nom=${encodeURIComponent(catName)}`, { method: "DELETE" });
+            sessionStorage.removeItem("myrestos_cats");
+            await fetchCategories();
+            renderAdminCategories();
+        } catch (err) {
+            console.error("deleteCategory:", err);
+            alert("Erreur lors de la suppression.");
+        }
+    }
+
+    /* ==============================
+       QUICK EDIT (TAG CAT)
+    ============================== */
+    function openQuickEdit(restoName) {
+        quickEditRestoName = restoName;
+        const resto = allData.find(r => r.nom === restoName);
+        if (!resto) return;
+
+        quickEditSelectedCats = (resto.categorie || "").split(",").map(c => c.trim()).filter(Boolean);
+        document.getElementById("quickEditSubtitle").textContent = restoName;
+        renderQuickEditTags();
+        document.getElementById("quickEditModal").classList.remove("hidden");
+    }
+
+    function renderQuickEditTags() {
+        const container = document.getElementById("quickEditTags");
+        container.innerHTML = categories.map(c => {
+            const isActive = quickEditSelectedCats.includes(c);
+            return `<button type="button" onclick="toggleQuickEditTag('${escapeAttr(c)}')" class="tag-btn border border-gray-200 px-3 py-2 rounded-xl text-[10px] font-black uppercase text-gray-400 transition-all ${isActive ? "active" : ""}">${escapeHtml(c)}</button>`;
+        }).join("");
+    }
+
+    function toggleQuickEditTag(cat) {
+        const idx = quickEditSelectedCats.indexOf(cat);
+        if (idx > -1) quickEditSelectedCats.splice(idx, 1);
+        else quickEditSelectedCats.push(cat);
+        renderQuickEditTags();
+    }
+
+    async function saveQuickEdit() {
+        if (!quickEditRestoName) return;
+        const btn = document.getElementById("btnSaveQuickEdit");
+        btn.disabled = true;
+        btn.textContent = "...";
+
+        try {
+            await fetch(`${API_BASE}/nom/${encodeURIComponent(quickEditRestoName)}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ data: { categorie: quickEditSelectedCats.join(",") } })
+            });
+            // Update local data
+            const resto = allData.find(r => r.nom === quickEditRestoName);
+            if (resto) resto.categorie = quickEditSelectedCats.join(",");
+            setCachedRestos(allData);
+            render();
+            closeQuickEdit();
+        } catch (err) {
+            console.error("saveQuickEdit:", err);
+            alert("Erreur lors de la sauvegarde.");
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Enregistrer";
+        }
+    }
+
+    function closeQuickEdit() {
+        document.getElementById("quickEditModal").classList.add("hidden");
+        quickEditRestoName = null;
+        quickEditSelectedCats = [];
+    }
+
+    /* ==============================
+       EDIT MODAL (Full edit)
+    ============================== */
+    function openEditModal(restoName) {
+        const resto = allData.find(r => r.nom === restoName);
+        if (!resto) return;
+
+        document.getElementById("editOriginalName").value = resto.nom;
+        document.getElementById("editName").value = resto.nom || "";
+        document.getElementById("editCity").value = resto.ville || "";
+        document.getElementById("editBudget").value = resto.budget || "";
+        document.getElementById("editMoment").value = resto.moment || "Midi";
+        document.getElementById("editRating").value = resto.note || "5";
+        document.getElementById("editStatut").value = resto.statut || "Fait";
+        document.getElementById("editComment").value = resto.commentaire || "";
+        document.getElementById("editUser").value = resto.evaluateur || "";
+
+        document.getElementById("editModal").classList.remove("hidden");
+    }
+
+    function closeEditModal() {
+        document.getElementById("editModal").classList.add("hidden");
+    }
+
+    document.getElementById("editForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const originalName = document.getElementById("editOriginalName").value;
+        const payload = {
+            nom: document.getElementById("editName").value.trim(),
+            ville: document.getElementById("editCity").value.trim(),
+            budget: document.getElementById("editBudget").value,
+            moment: document.getElementById("editMoment").value,
+            note: document.getElementById("editRating").value,
+            statut: document.getElementById("editStatut").value,
+            commentaire: document.getElementById("editComment").value.trim(),
+            evaluateur: document.getElementById("editUser").value.trim()
+        };
+
+        if (!payload.nom || !payload.ville) {
+            alert("Nom et Ville sont requis !");
+            return;
+        }
+
+        try {
+            await fetch(`${API_BASE}/nom/${encodeURIComponent(originalName)}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ data: payload })
+            });
+            invalidateCache();
+            closeEditModal();
+            await fetchRestos();
+        } catch (err) {
+            console.error("editResto:", err);
+            alert("Erreur lors de la modification.");
+        }
+    });
+
+    async function deleteResto() {
+        const name = document.getElementById("editOriginalName").value;
+        if (!confirm(`Supprimer "${name}" définitivement ?`)) return;
+        try {
+            await fetch(`${API_BASE}/nom/${encodeURIComponent(name)}`, { method: "DELETE" });
+            invalidateCache();
+            closeEditModal();
+            await fetchRestos();
+        } catch (err) {
+            console.error("deleteResto:", err);
+            alert("Erreur lors de la suppression.");
+        }
+    }
+
+    /* ==============================
+       MARK AS DONE ("J'Y SUIS")
+    ============================== */
+    async function markAsDone(restoName) {
+        try {
+            await fetch(`${API_BASE}/nom/${encodeURIComponent(restoName)}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ data: { statut: "Fait" } })
+            });
+            const resto = allData.find(r => r.nom === restoName);
+            if (resto) resto.statut = "Fait";
+            setCachedRestos(allData);
+            render();
+        } catch (err) {
+            console.error("markAsDone:", err);
+            alert("Erreur.");
+        }
+    }
+
+    /* ==============================
+       FORM SUBMIT
+    ============================== */
+    document.getElementById("restoForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const nom = document.getElementById("formName").value.trim();
+        const ville = document.getElementById("formCity").value.trim();
+        const user = document.getElementById("formUser").value.trim();
+
+        // Secret handshake
+        if (nom.toLowerCase() === "admin" && ville.toLowerCase() === "jya") {
+            document.getElementById("restoForm").reset();
+            document.getElementById("addSection").open = false;
+            selectedFormCategories = [];
+            renderFormCategoryButtons();
+            openAdmin();
+            return;
+        }
+
+        // Validation
+        if (!nom || !ville || !user) {
+            alert("Remplis au moins le Nom, la Ville et ton Nom !");
+            return;
+        }
+
+        // Duplicate check
+        if (allData.some(r => (r.nom || "").toLowerCase() === nom.toLowerCase())) {
+            alert(`⚠️ "${nom}" est déjà dans la liste !`);
+            return;
+        }
+
+        const btn = document.getElementById("btnSubmit");
+        btn.disabled = true;
+        btn.textContent = "...";
+
+        const payload = {
+            nom: nom,
+            ville: ville,
+            statut: formStatut,
+            categorie: selectedFormCategories.join(","),
+            note: formStatut === "Fait" ? document.getElementById("formRating").value : "",
+            budget: document.getElementById("formBudget").value,
+            moment: document.getElementById("formMoment").value,
+            commentaire: document.getElementById("formComment").value.trim(),
+            evaluateur: user
+        };
+
+        try {
+            await fetch(API_RESTOS, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ data: [payload] })
+            });
+            // Add locally & update cache
+            allData.push(payload);
+            setCachedRestos(allData);
+            // Reset form
+            document.getElementById("restoForm").reset();
+            selectedFormCategories = [];
+            renderFormCategoryButtons();
+            document.getElementById("addSection").open = false;
+            setFormStatut("Fait");
+            render();
+        } catch (err) {
+            console.error("addResto:", err);
+            alert("Erreur lors de l'ajout.");
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Enregistrer";
+        }
+    });
+
+    /* ==============================
+       SURPRIZME (Random)
+    ============================== */
+    function pickRandom() {
+        const filtered = getFilteredData();
+        if (filtered.length === 0) {
+            alert("Aucun restaurant dans cette vue !");
+            return;
+        }
+        const winner = filtered[Math.floor(Math.random() * filtered.length)];
+        render(winner.nom);
+
+        // Scroll to card
+        setTimeout(() => {
+            const card = document.getElementById("card-" + winner.nom);
+            if (card) {
+                card.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        }, 100);
+
+        // Remove highlight after animation
+        setTimeout(() => {
+            render();
+        }, 4000);
+    }
+
+    /* ==============================
+       SCROLL TO ADD
+    ============================== */
+    function scrollToAdd() {
+        const section = document.getElementById("addSection");
+        section.open = true;
+        setTimeout(() => section.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+        setTimeout(() => document.getElementById("formName").focus(), 200);
+    }
+
+    /* ==============================
+       MODAL OVERLAY CLICK
+    ============================== */
+    function handleModalOverlayClick(event, modalId) {
+        if (event.target === document.getElementById(modalId)) {
+            document.getElementById(modalId).classList.add("hidden");
+        }
+    }
+
+    /* ==============================
+       UTILITIES
+    ============================== */
+    function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str || "";
+        return div.innerHTML;
+    }
+
+    function escapeAttr(str) {
+        return (str || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+    }
+
+    /* ==============================
+       INIT
+    ============================== */
+    document.addEventListener("DOMContentLoaded", () => {
+        // Fetch data (uses cache if available)
+        fetchRestos();
+        fetchCategories();
+
+        // City autocomplete
+        setupCityAutocomplete();
+
+        // Secret code listeners
+        document.getElementById("formName").addEventListener("input", checkSecretCode);
+        document.getElementById("formCity").addEventListener("input", checkSecretCode);
+
+        // Default form statut
+        setFormStatut("Fait");
+    });
     </script>
 </body>
 </html>
